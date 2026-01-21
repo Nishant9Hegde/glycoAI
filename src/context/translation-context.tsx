@@ -35,11 +35,12 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchTranslations = useCallback(async (lang: Language) => {
+    const identityMap = stringsToTranslate.reduce((acc, str) => {
+      acc[str] = str;
+      return acc;
+    }, {} as TranslationDict);
+
     if (lang === 'en') {
-      const identityMap = stringsToTranslate.reduce((acc, str) => {
-        acc[str] = str;
-        return acc;
-      }, {} as TranslationDict);
       setTranslations(identityMap);
       return;
     }
@@ -51,32 +52,37 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
 
     setIsLoading(true);
     try {
-      const result = await getTranslation({
-        texts: stringsToTranslate,
-        targetLanguage: getLanguageName(lang),
-      });
+      const chunkSize = 15;
+      let allTranslatedTexts: string[] = [];
+      
+      for (let i = 0; i < stringsToTranslate.length; i += chunkSize) {
+        const chunk = stringsToTranslate.slice(i, i + chunkSize);
+        const result = await getTranslation({
+          texts: chunk,
+          targetLanguage: getLanguageName(lang),
+        });
 
-      if (result.success && result.data.translatedTexts.length === stringsToTranslate.length) {
+        if (result.success && result.data.translatedTexts.length === chunk.length) {
+          allTranslatedTexts.push(...result.data.translatedTexts);
+        } else {
+          console.error('Translation chunk failed or mismatch in length', result.error);
+          allTranslatedTexts.push(...chunk); // Fallback to original text for the failed chunk
+        }
+      }
+
+      if (allTranslatedTexts.length === stringsToTranslate.length) {
         const newTranslations = stringsToTranslate.reduce((acc, originalText, index) => {
-          acc[originalText] = result.data.translatedTexts[index];
+          acc[originalText] = allTranslatedTexts[index];
           return acc;
         }, {} as TranslationDict);
         translationCache.set(lang, newTranslations);
         setTranslations(newTranslations);
       } else {
-        console.error('Translation failed or mismatch in length', result.error);
-        const identityMap = stringsToTranslate.reduce((acc, str) => {
-          acc[str] = str;
-          return acc;
-        }, {} as TranslationDict);
+        console.error('Final translated texts length does not match original length');
         setTranslations(identityMap);
       }
     } catch (error) {
       console.error('Failed to fetch translations', error);
-      const identityMap = stringsToTranslate.reduce((acc, str) => {
-          acc[str] = str;
-          return acc;
-        }, {} as TranslationDict);
       setTranslations(identityMap);
     } finally {
       setIsLoading(false);

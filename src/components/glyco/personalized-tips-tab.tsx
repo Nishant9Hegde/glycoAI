@@ -120,13 +120,20 @@ export function PersonalizedTipsTab() {
     const translateResponse = async () => {
       startTransition(async () => {
         const langName = getLanguageName(language);
-        const result = await getTranslation({ texts: aiResponse.tips, targetLanguage: langName });
+        const chunkSize = 15;
+        let allTranslatedTexts: string[] = [];
 
-        if (result.success) {
-          setTranslatedTips(result.data.translatedTexts);
-        } else {
-          setTranslatedTips(aiResponse.tips);
+        for (let i = 0; i < aiResponse.tips.length; i += chunkSize) {
+            const chunk = aiResponse.tips.slice(i, i + chunkSize);
+            const result = await getTranslation({ texts: chunk, targetLanguage: langName });
+            if (result.success && result.data.translatedTexts.length === chunk.length) {
+                allTranslatedTexts.push(...result.data.translatedTexts);
+            } else {
+                console.error('Failed to translate tips chunk', result.error);
+                allTranslatedTexts.push(...chunk);
+            }
         }
+        setTranslatedTips(allTranslatedTexts);
       });
     };
 

@@ -114,16 +114,28 @@ export function SuggestSolutionsTab() {
       startTransition(async () => {
         const textsToTranslate = [aiResponse.explanation, ...aiResponse.solutions];
         const langName = getLanguageName(language);
-        const result = await getTranslation({ texts: textsToTranslate, targetLanguage: langName });
+        const chunkSize = 15;
+        let allTranslatedTexts: string[] = [];
 
-        if (result.success) {
-          const [translatedExplanation, ...translatedSolutions] = result.data.translatedTexts;
+        for (let i = 0; i < textsToTranslate.length; i += chunkSize) {
+            const chunk = textsToTranslate.slice(i, i + chunkSize);
+            const result = await getTranslation({ texts: chunk, targetLanguage: langName });
+            if (result.success && result.data.translatedTexts.length === chunk.length) {
+                allTranslatedTexts.push(...result.data.translatedTexts);
+            } else {
+                console.error('Failed to translate solutions chunk', result.error);
+                allTranslatedTexts.push(...chunk);
+            }
+        }
+        
+        const [translatedExplanation, ...translatedSolutions] = allTranslatedTexts;
+        if (translatedExplanation !== undefined) {
           setTranslatedResponse({
             explanation: translatedExplanation,
             solutions: translatedSolutions,
           });
         } else {
-          setTranslatedResponse(aiResponse);
+            setTranslatedResponse(aiResponse); // Fallback
         }
       });
     };
