@@ -114,7 +114,7 @@ export function SuggestSolutionsTab() {
       startTransition(async () => {
         const textsToTranslate = [aiResponse.explanation, ...aiResponse.solutions];
         const langName = getLanguageName(language);
-        const chunkSize = 15;
+        const chunkSize = 10;
         let allTranslatedTexts: string[] = [];
 
         for (let i = 0; i < textsToTranslate.length; i += chunkSize) {
@@ -125,6 +125,9 @@ export function SuggestSolutionsTab() {
             } else {
                 console.error('Failed to translate solutions chunk', result.error);
                 allTranslatedTexts.push(...chunk);
+            }
+            if (textsToTranslate.length > chunkSize) {
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
         }
         

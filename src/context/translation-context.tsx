@@ -52,7 +52,7 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
 
     setIsLoading(true);
     try {
-      const chunkSize = 15;
+      const chunkSize = 10;
       let allTranslatedTexts: string[] = [];
       
       for (let i = 0; i < stringsToTranslate.length; i += chunkSize) {
@@ -67,6 +67,9 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
         } else {
           console.error('Translation chunk failed or mismatch in length', result.error);
           allTranslatedTexts.push(...chunk); // Fallback to original text for the failed chunk
+        }
+        if (stringsToTranslate.length > chunkSize) {
+            await new Promise(resolve => setTimeout(resolve, 200));
         }
       }
 

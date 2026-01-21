@@ -120,7 +120,7 @@ export function PersonalizedTipsTab() {
     const translateResponse = async () => {
       startTransition(async () => {
         const langName = getLanguageName(language);
-        const chunkSize = 15;
+        const chunkSize = 10;
         let allTranslatedTexts: string[] = [];
 
         for (let i = 0; i < aiResponse.tips.length; i += chunkSize) {
@@ -131,6 +131,9 @@ export function PersonalizedTipsTab() {
             } else {
                 console.error('Failed to translate tips chunk', result.error);
                 allTranslatedTexts.push(...chunk);
+            }
+            if (aiResponse.tips.length > chunkSize) {
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
         }
         setTranslatedTips(allTranslatedTexts);
