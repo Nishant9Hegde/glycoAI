@@ -6,6 +6,7 @@ export const stringsToTranslate = [
   'Personalized Tips',
   'Explain Behavior',
   'Suggest Solutions',
+  'AI Prediction',
 
   // from explain-behavior-tab.tsx
   'Explain Unusual Behavior',
@@ -68,6 +69,19 @@ export const stringsToTranslate = [
   'Settings',
   'Support',
   'Logout',
+
+  // from predict-glucose-tab.tsx
+  'AI Glucose Prediction',
+  'Predict your future blood glucose levels based on your current data.',
+  'Current Glucose (mg/dL)',
+  'Time Since Last Meal (hours)',
+  'Predict Glucose',
+  'AI-Generated Prediction',
+  'Here is your predicted glucose level for the next 2 hours.',
+  'Please complete your biodata on the left before getting a prediction.',
+  'Predicted Glucose Level',
+  'Reasoning',
+  'Confidence Score',
 
   // from constants.ts
   ...ACTIVITY_LEVELS,
