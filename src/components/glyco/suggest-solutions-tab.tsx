@@ -31,8 +31,8 @@ const TranslatedSelectItem = ({ item }: { item: string }) => {
 function getLanguageName(code: string): string {
     switch (code) {
       case 'en': return 'English';
-      case 'hi': return 'Hindi';
-      case 'kn': return 'Kannada';
+      case 'fr': return 'French';
+      case 'es': return 'Spanish';
       default: return 'English';
     }
 }

@@ -23,7 +23,7 @@ const SuggestSolutionsForIssuesInputSchema = z.object({
   targetLanguage: z
     .string()
     .describe(
-      'The target language for the response (e.g., "Hindi", "English").'
+      'The target language for the response (e.g., "French", "Spanish").'
     ),
 });
 export type SuggestSolutionsForIssuesInput = z.infer<

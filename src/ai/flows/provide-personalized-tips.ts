@@ -23,7 +23,7 @@ const PersonalizedTipsInputSchema = z.object({
   targetLanguage: z
     .string()
     .describe(
-      'The target language for the response (e.g., "Hindi", "English").'
+      'The target language for the response (e.g., "French", "Spanish").'
     ),
 });
 export type PersonalizedTipsInput = z.infer<typeof PersonalizedTipsInputSchema>;

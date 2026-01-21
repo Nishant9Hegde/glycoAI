@@ -13,7 +13,7 @@ import {z} from 'genkit';
 
 const TranslateTextInputSchema = z.object({
   texts: z.array(z.string()).describe('The texts to be translated.'),
-  targetLanguage: z.string().describe('The target language for translation (e.g., "Hindi", "Kannada").'),
+  targetLanguage: z.string().describe('The target language for translation (e.g., "French", "Spanish").'),
 });
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
