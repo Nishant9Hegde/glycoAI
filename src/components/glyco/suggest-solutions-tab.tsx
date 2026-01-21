@@ -1,12 +1,11 @@
-
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUserData } from '@/context/user-data-context';
-import { getSolutionsForIssues } from '@/app/actions';
+import { getSolutionsForIssues, getTranslation } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -16,6 +15,7 @@ import { COMMON_ISSUES } from '@/lib/constants';
 import { AIResponse } from './ai-response';
 import { type SuggestSolutionsForIssuesOutput } from '@/ai/flows/suggest-solutions-for-issues';
 import { useTranslation } from '@/hooks/use-translation';
+import { useLanguage } from '@/context/language-context';
 
 const SolutionsSchema = z.object({
   issue: z.string().min(1, 'Please select an issue.'),
@@ -28,9 +28,13 @@ const TranslatedSelectItem = ({ item }: { item: string }) => {
   return <SelectItem value={item}>{translatedText}</SelectItem>;
 }
 
-const TranslatedListItem = ({ text }: { text: string }) => {
-  const { translatedText } = useTranslation(text);
-  return <li>{translatedText}</li>;
+function getLanguageName(code: string): string {
+    switch (code) {
+      case 'en': return 'English';
+      case 'hi': return 'Hindi';
+      case 'kn': return 'Kannada';
+      default: return 'English';
+    }
 }
 
 export function SuggestSolutionsTab() {
@@ -38,6 +42,18 @@ export function SuggestSolutionsTab() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<SuggestSolutionsForIssuesOutput | null>(null);
+  const [translatedResponse, setTranslatedResponse] = useState<(SuggestSolutionsForIssuesOutput & { solutions: string[] }) | null>(null);
+
+  const { language } = useLanguage();
+
+  const form = useForm<SolutionsFormValues>({
+    resolver: zodResolver(SolutionsSchema),
+    defaultValues: {
+      issue: '',
+    },
+  });
+
+  const issue = form.watch('issue');
 
   const { translatedText: title } = useTranslation('Solutions for Common Issues');
   const { translatedText: description } = useTranslation('Select a common diabetes-related issue to get AI-powered solutions and explanations.');
@@ -50,15 +66,10 @@ export function SuggestSolutionsTab() {
   const { translatedText: errorTitle } = useTranslation('Error');
   const { translatedText: explanationTitle } = useTranslation('Explanation');
   const { translatedText: solutionsTitle } = useTranslation('Solutions');
-  
-  const { translatedText: aiDescription } = useTranslation(`For the issue: ${form.getValues('issue')}`);
+  const { translatedText: translatedIssue } = useTranslation(issue);
+  const { translatedText: aiDescriptionPrefix } = useTranslation('For the issue:');
+  const aiDescription = issue ? `${aiDescriptionPrefix} ${translatedIssue}` : '';
 
-  const form = useForm<SolutionsFormValues>({
-    resolver: zodResolver(SolutionsSchema),
-    defaultValues: {
-      issue: '',
-    },
-  });
 
   const onSubmit = (values: SolutionsFormValues) => {
     if (!userData.age || !userData.weight || !userData.height || !userData.insulinBrand) {
@@ -70,6 +81,7 @@ export function SuggestSolutionsTab() {
       return;
     }
     setAiResponse(null);
+    setTranslatedResponse(null);
     startTransition(async () => {
       const dataForAI = {
         ...userData,
@@ -87,6 +99,38 @@ export function SuggestSolutionsTab() {
       }
     });
   };
+
+  useEffect(() => {
+    if (!aiResponse) {
+      setTranslatedResponse(null);
+      return;
+    }
+    if (language === 'en') {
+      setTranslatedResponse(aiResponse);
+      return;
+    }
+
+    const translateResponse = async () => {
+      startTransition(async () => {
+        const textsToTranslate = [aiResponse.explanation, ...aiResponse.solutions];
+        const langName = getLanguageName(language);
+        const result = await getTranslation({ texts: textsToTranslate, targetLanguage: langName });
+
+        if (result.success) {
+          const [translatedExplanation, ...translatedSolutions] = result.data.translatedTexts;
+          setTranslatedResponse({
+            explanation: translatedExplanation,
+            solutions: translatedSolutions,
+          });
+        } else {
+          setTranslatedResponse(aiResponse);
+        }
+      });
+    };
+
+    translateResponse();
+  }, [aiResponse, language]);
+
 
   return (
     <Card>
@@ -127,25 +171,25 @@ export function SuggestSolutionsTab() {
           </CardFooter>
         </form>
       </Form>
-      {(isPending || aiResponse) && (
+      {(isPending || translatedResponse) && (
         <AIResponse
-          isLoading={isPending}
+          isLoading={isPending && !translatedResponse}
           title={aiTitle}
           description={aiDescription}
         >
-          {aiResponse && (
+          {translatedResponse && (
             <div className="space-y-4 text-sm">
                 <div>
                     <h3 className="font-bold text-base text-primary">{solutionsTitle}</h3>
                     <ul className="list-disc space-y-2 pl-5 text-foreground/90">
-                        {aiResponse.solutions.map((solution, index) => (
-                            <TranslatedListItem key={index} text={solution} />
+                        {translatedResponse.solutions.map((solution, index) => (
+                            <li key={index}>{solution}</li>
                         ))}
                     </ul>
                 </div>
                 <div>
                     <h3 className="font-bold text-base text-primary">{explanationTitle}</h3>
-                    <p className="text-foreground/90">{aiResponse.explanation}</p>
+                    <p className="text-foreground/90">{translatedResponse.explanation}</p>
                 </div>
             </div>
           )}

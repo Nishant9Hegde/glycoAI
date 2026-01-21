@@ -1,12 +1,11 @@
-
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUserData } from '@/context/user-data-context';
-import { getBloodGlucoseExplanation } from '@/app/actions';
+import { getBloodGlucoseExplanation, getTranslation } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -16,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { AIResponse } from './ai-response';
 import { type ExplainBloodGlucoseBehaviorOutput } from '@/ai/flows/explain-blood-glucose-behavior';
 import { useTranslation } from '@/hooks/use-translation';
+import { useLanguage } from '@/context/language-context';
 
 const ExplainBehaviorSchema = z.object({
   bloodGlucoseLevel: z.coerce.number().min(1, 'Please enter a valid blood glucose level.'),
@@ -27,15 +27,13 @@ const ExplainBehaviorSchema = z.object({
 
 type ExplainBehaviorFormValues = z.infer<typeof ExplainBehaviorSchema>;
 
-function TranslatedResponse({ text, title }: { text: string; title: string }) {
-  const { translatedText } = useTranslation(text);
-  const { translatedText: translatedTitle } = useTranslation(title);
-  return (
-    <div>
-      <h3 className="font-bold text-base text-primary">{translatedTitle}</h3>
-      <p className="text-foreground/90">{translatedText}</p>
-    </div>
-  );
+function getLanguageName(code: string): string {
+    switch (code) {
+      case 'en': return 'English';
+      case 'hi': return 'Hindi';
+      case 'kn': return 'Kannada';
+      default: return 'English';
+    }
 }
 
 export function ExplainBehaviorTab() {
@@ -43,6 +41,9 @@ export function ExplainBehaviorTab() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<ExplainBloodGlucoseBehaviorOutput | null>(null);
+  const [translatedResponse, setTranslatedResponse] = useState<ExplainBloodGlucoseBehaviorOutput | null>(null);
+
+  const { language } = useLanguage();
 
   const { translatedText: title } = useTranslation('Explain Unusual Behavior');
   const { translatedText: description } = useTranslation('Get AI-powered explanations for unexpected blood glucose readings based on your recent activity and intake.');
@@ -57,6 +58,9 @@ export function ExplainBehaviorTab() {
   const { translatedText: missingInfoTitle } = useTranslation('Missing Information');
   const { translatedText: missingInfoDesc } = useTranslation('Please complete your biodata on the left before getting an explanation.');
   const { translatedText: errorTitle } = useTranslation('Error');
+  const { translatedText: explanationTitle } = useTranslation('Explanation');
+  const { translatedText: reasonsTitle } = useTranslation('Reasons');
+  const { translatedText: suggestionsTitle } = useTranslation('Suggestions');
 
   const form = useForm<ExplainBehaviorFormValues>({
     resolver: zodResolver(ExplainBehaviorSchema),
@@ -79,6 +83,7 @@ export function ExplainBehaviorTab() {
       return;
     }
     setAiResponse(null);
+    setTranslatedResponse(null);
     startTransition(async () => {
       const result = await getBloodGlucoseExplanation(values);
       if (result.success) {
@@ -92,6 +97,37 @@ export function ExplainBehaviorTab() {
       }
     });
   };
+
+  useEffect(() => {
+    if (!aiResponse) {
+      setTranslatedResponse(null);
+      return;
+    }
+    if (language === 'en') {
+      setTranslatedResponse(aiResponse);
+      return;
+    }
+
+    const translateResponse = async () => {
+      startTransition(async () => {
+        const texts = [aiResponse.explanation, aiResponse.reasons, aiResponse.suggestions];
+        const langName = getLanguageName(language);
+        const result = await getTranslation({ texts: texts, targetLanguage: langName });
+
+        if (result.success) {
+          setTranslatedResponse({
+            explanation: result.data.translatedTexts[0],
+            reasons: result.data.translatedTexts[1],
+            suggestions: result.data.translatedTexts[2],
+          });
+        } else {
+          setTranslatedResponse(aiResponse);
+        }
+      });
+    };
+
+    translateResponse();
+  }, [aiResponse, language]);
 
   return (
     <Card>
@@ -177,17 +213,26 @@ export function ExplainBehaviorTab() {
           </CardFooter>
         </form>
       </Form>
-      {(isPending || aiResponse) && (
+      {(isPending || translatedResponse) && (
         <AIResponse
-          isLoading={isPending}
+          isLoading={isPending && !translatedResponse}
           title={aiTitle}
           description={aiDescription}
         >
-          {aiResponse && (
+          {translatedResponse && (
             <div className="space-y-4 text-sm">
-              <TranslatedResponse title="Explanation" text={aiResponse.explanation} />
-              <TranslatedResponse title="Reasons" text={aiResponse.reasons} />
-              <TranslatedResponse title="Suggestions" text={aiResponse.suggestions} />
+              <div>
+                <h3 className="font-bold text-base text-primary">{explanationTitle}</h3>
+                <p className="text-foreground/90">{translatedResponse.explanation}</p>
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-primary">{reasonsTitle}</h3>
+                <p className="text-foreground/90">{translatedResponse.reasons}</p>
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-primary">{suggestionsTitle}</h3>
+                <p className="text-foreground/90">{translatedResponse.suggestions}</p>
+              </div>
             </div>
           )}
         </AIResponse>

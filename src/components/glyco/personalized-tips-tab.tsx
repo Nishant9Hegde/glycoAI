@@ -1,12 +1,11 @@
-
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUserData } from '@/context/user-data-context';
-import { getPersonalizedTips } from '@/app/actions';
+import { getPersonalizedTips, getTranslation } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -17,6 +16,7 @@ import { ACTIVITY_LEVELS, DIETARY_HABITS } from '@/lib/constants';
 import { AIResponse } from './ai-response';
 import { type PersonalizedTipsOutput } from '@/ai/flows/provide-personalized-tips';
 import { useTranslation } from '@/hooks/use-translation';
+import { useLanguage } from '@/context/language-context';
 
 const TipsSchema = z.object({
   unitsConsumed: z.coerce.number().min(0, 'Please enter units consumed.'),
@@ -34,9 +34,13 @@ const TranslatedSelectItem = ({ item }: { item: string }) => {
   return <SelectItem value={item}>{translatedText}</SelectItem>;
 }
 
-const TranslatedListItem = ({ text }: { text: string }) => {
-  const { translatedText } = useTranslation(text);
-  return <li>{translatedText}</li>;
+function getLanguageName(code: string): string {
+    switch (code) {
+      case 'en': return 'English';
+      case 'hi': return 'Hindi';
+      case 'kn': return 'Kannada';
+      default: return 'English';
+    }
 }
 
 export function PersonalizedTipsTab() {
@@ -44,6 +48,9 @@ export function PersonalizedTipsTab() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<PersonalizedTipsOutput | null>(null);
+  const [translatedTips, setTranslatedTips] = useState<string[] | null>(null);
+
+  const { language } = useLanguage();
 
   const { translatedText: title } = useTranslation('Personalized Tips & Suggestions');
   const { translatedText: description } = useTranslation('Provide your recent data to receive AI-generated tips for naturally maintaining your blood glucose levels.');
@@ -80,6 +87,7 @@ export function PersonalizedTipsTab() {
       return;
     }
     setAiResponse(null);
+    setTranslatedTips(null);
     startTransition(async () => {
       const dataForAI = {
         ...userData,
@@ -98,6 +106,32 @@ export function PersonalizedTipsTab() {
       }
     });
   };
+
+  useEffect(() => {
+    if (!aiResponse) {
+      setTranslatedTips(null);
+      return;
+    }
+    if (language === 'en') {
+      setTranslatedTips(aiResponse.tips);
+      return;
+    }
+
+    const translateResponse = async () => {
+      startTransition(async () => {
+        const langName = getLanguageName(language);
+        const result = await getTranslation({ texts: aiResponse.tips, targetLanguage: langName });
+
+        if (result.success) {
+          setTranslatedTips(result.data.translatedTexts);
+        } else {
+          setTranslatedTips(aiResponse.tips);
+        }
+      });
+    };
+
+    translateResponse();
+  }, [aiResponse, language]);
 
   return (
     <Card>
@@ -188,16 +222,16 @@ export function PersonalizedTipsTab() {
           </CardFooter>
         </form>
       </Form>
-      {(isPending || aiResponse) && (
+      {(isPending || translatedTips) && (
         <AIResponse
-          isLoading={isPending}
+          isLoading={isPending && !translatedTips}
           title={aiTitle}
           description={aiDescription}
         >
-          {aiResponse && (
+          {translatedTips && (
             <ul className="list-disc space-y-2 pl-5 text-sm text-foreground/90">
-              {aiResponse.tips.map((tip, index) => (
-                <TranslatedListItem key={index} text={tip} />
+              {translatedTips.map((tip, index) => (
+                <li key={index}>{tip}</li>
               ))}
             </ul>
           )}
