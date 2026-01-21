@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { COMMON_ISSUES } from '@/lib/constants';
 import { AIResponse } from './ai-response';
 import { type SuggestSolutionsForIssuesOutput } from '@/ai/flows/suggest-solutions-for-issues';
+import { useTranslation } from '@/hooks/use-translation';
 
 const SolutionsSchema = z.object({
   issue: z.string().min(1, 'Please select an issue.'),
@@ -22,11 +23,35 @@ const SolutionsSchema = z.object({
 
 type SolutionsFormValues = z.infer<typeof SolutionsSchema>;
 
+const TranslatedSelectItem = ({ item }: { item: string }) => {
+  const { translatedText } = useTranslation(item);
+  return <SelectItem value={item}>{translatedText}</SelectItem>;
+}
+
+const TranslatedListItem = ({ text }: { text: string }) => {
+  const { translatedText } = useTranslation(text);
+  return <li>{translatedText}</li>;
+}
+
 export function SuggestSolutionsTab() {
   const { userData } = useUserData();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<SuggestSolutionsForIssuesOutput | null>(null);
+
+  const { translatedText: title } = useTranslation('Solutions for Common Issues');
+  const { translatedText: description } = useTranslation('Select a common diabetes-related issue to get AI-powered solutions and explanations.');
+  const { translatedText: issueLabel } = useTranslation('Common Issue');
+  const { translatedText: issuePlaceholder } = useTranslation('Select an issue you are facing');
+  const { translatedText: buttonText } = useTranslation('Find Solutions');
+  const { translatedText: aiTitle } = useTranslation('AI-Suggested Solutions');
+  const { translatedText: missingInfoTitle } = useTranslation('Missing Information');
+  const { translatedText: missingInfoDesc } = useTranslation('Please complete your biodata on the left before getting solutions.');
+  const { translatedText: errorTitle } = useTranslation('Error');
+  const { translatedText: explanationTitle } = useTranslation('Explanation');
+  const { translatedText: solutionsTitle } = useTranslation('Solutions');
+  
+  const { translatedText: aiDescription } = useTranslation(`For the issue: ${form.getValues('issue')}`);
 
   const form = useForm<SolutionsFormValues>({
     resolver: zodResolver(SolutionsSchema),
@@ -39,8 +64,8 @@ export function SuggestSolutionsTab() {
     if (!userData.age || !userData.weight || !userData.height || !userData.insulinBrand) {
       toast({
         variant: 'destructive',
-        title: 'Missing Information',
-        description: 'Please complete your biodata on the left before getting solutions.',
+        title: missingInfoTitle,
+        description: missingInfoDesc,
       });
       return;
     }
@@ -56,7 +81,7 @@ export function SuggestSolutionsTab() {
       } else {
         toast({
           variant: 'destructive',
-          title: 'Error',
+          title: errorTitle,
           description: result.error,
         });
       }
@@ -68,8 +93,8 @@ export function SuggestSolutionsTab() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardHeader>
-            <CardTitle>Solutions for Common Issues</CardTitle>
-            <CardDescription>Select a common diabetes-related issue to get AI-powered solutions and explanations.</CardDescription>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -77,16 +102,16 @@ export function SuggestSolutionsTab() {
               name="issue"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Common Issue</FormLabel>
+                  <FormLabel>{issueLabel}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select an issue you are facing" />
+                        <SelectValue placeholder={issuePlaceholder} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {COMMON_ISSUES.map(issue => (
-                        <SelectItem key={issue} value={issue}>{issue}</SelectItem>
+                        <TranslatedSelectItem key={issue} item={issue} />
                       ))}
                     </SelectContent>
                   </Select>
@@ -97,7 +122,7 @@ export function SuggestSolutionsTab() {
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={isPending} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              Find Solutions
+              {buttonText}
             </Button>
           </CardFooter>
         </form>
@@ -105,21 +130,21 @@ export function SuggestSolutionsTab() {
       {(isPending || aiResponse) && (
         <AIResponse
           isLoading={isPending}
-          title="AI-Suggested Solutions"
-          description={`For the issue: ${form.getValues('issue')}`}
+          title={aiTitle}
+          description={aiDescription}
         >
           {aiResponse && (
             <div className="space-y-4 text-sm">
                 <div>
-                    <h3 className="font-bold text-base text-primary">Solutions</h3>
+                    <h3 className="font-bold text-base text-primary">{solutionsTitle}</h3>
                     <ul className="list-disc space-y-2 pl-5 text-foreground/90">
                         {aiResponse.solutions.map((solution, index) => (
-                            <li key={index}>{solution}</li>
+                            <TranslatedListItem key={index} text={solution} />
                         ))}
                     </ul>
                 </div>
                 <div>
-                    <h3 className="font-bold text-base text-primary">Explanation</h3>
+                    <h3 className="font-bold text-base text-primary">{explanationTitle}</h3>
                     <p className="text-foreground/90">{aiResponse.explanation}</p>
                 </div>
             </div>

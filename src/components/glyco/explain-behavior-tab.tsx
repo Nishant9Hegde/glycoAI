@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { AIResponse } from './ai-response';
 import { type ExplainBloodGlucoseBehaviorOutput } from '@/ai/flows/explain-blood-glucose-behavior';
+import { useTranslation } from '@/hooks/use-translation';
 
 const ExplainBehaviorSchema = z.object({
   bloodGlucoseLevel: z.coerce.number().min(1, 'Please enter a valid blood glucose level.'),
@@ -26,11 +27,36 @@ const ExplainBehaviorSchema = z.object({
 
 type ExplainBehaviorFormValues = z.infer<typeof ExplainBehaviorSchema>;
 
+function TranslatedResponse({ text, title }: { text: string; title: string }) {
+  const { translatedText } = useTranslation(text);
+  const { translatedText: translatedTitle } = useTranslation(title);
+  return (
+    <div>
+      <h3 className="font-bold text-base text-primary">{translatedTitle}</h3>
+      <p className="text-foreground/90">{translatedText}</p>
+    </div>
+  );
+}
+
 export function ExplainBehaviorTab() {
   const { userData } = useUserData();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<ExplainBloodGlucoseBehaviorOutput | null>(null);
+
+  const { translatedText: title } = useTranslation('Explain Unusual Behavior');
+  const { translatedText: description } = useTranslation('Get AI-powered explanations for unexpected blood glucose readings based on your recent activity and intake.');
+  const { translatedText: glucoseLabel } = useTranslation('Blood Glucose (mg/dL)');
+  const { translatedText: insulinLabel } = useTranslation('Insulin Units Consumed');
+  const { translatedText: activityLabel } = useTranslation('Activity Performed');
+  const { translatedText: foodLabel } = useTranslation('Food Intake');
+  const { translatedText: otherFactorsLabel } = useTranslation('Other Factors (Optional)');
+  const { translatedText: buttonText } = useTranslation('Get Explanation');
+  const { translatedText: aiTitle } = useTranslation('AI-Generated Explanation');
+  const { translatedText: aiDescription } = useTranslation('Here\'s a breakdown of the potential factors.');
+  const { translatedText: missingInfoTitle } = useTranslation('Missing Information');
+  const { translatedText: missingInfoDesc } = useTranslation('Please complete your biodata on the left before getting an explanation.');
+  const { translatedText: errorTitle } = useTranslation('Error');
 
   const form = useForm<ExplainBehaviorFormValues>({
     resolver: zodResolver(ExplainBehaviorSchema),
@@ -47,8 +73,8 @@ export function ExplainBehaviorTab() {
     if (!userData.age || !userData.weight || !userData.height) {
       toast({
         variant: 'destructive',
-        title: 'Missing Information',
-        description: 'Please complete your biodata on the left before getting an explanation.',
+        title: missingInfoTitle,
+        description: missingInfoDesc,
       });
       return;
     }
@@ -60,7 +86,7 @@ export function ExplainBehaviorTab() {
       } else {
         toast({
           variant: 'destructive',
-          title: 'Error',
+          title: errorTitle,
           description: result.error,
         });
       }
@@ -72,8 +98,8 @@ export function ExplainBehaviorTab() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardHeader>
-            <CardTitle>Explain Unusual Behavior</CardTitle>
-            <CardDescription>Get AI-powered explanations for unexpected blood glucose readings based on your recent activity and intake.</CardDescription>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -82,7 +108,7 @@ export function ExplainBehaviorTab() {
                 name="bloodGlucoseLevel"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Blood Glucose (mg/dL)</FormLabel>
+                    <FormLabel>{glucoseLabel}</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="e.g., 180" {...field} />
                     </FormControl>
@@ -95,7 +121,7 @@ export function ExplainBehaviorTab() {
                 name="insulinUnits"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Insulin Units Consumed</FormLabel>
+                    <FormLabel>{insulinLabel}</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="e.g., 5" {...field} />
                     </FormControl>
@@ -109,7 +135,7 @@ export function ExplainBehaviorTab() {
               name="activity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Activity Performed</FormLabel>
+                  <FormLabel>{activityLabel}</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Intense 30-min run" {...field} />
                   </FormControl>
@@ -122,7 +148,7 @@ export function ExplainBehaviorTab() {
               name="foodIntake"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Food Intake</FormLabel>
+                  <FormLabel>{foodLabel}</FormLabel>
                   <FormControl>
                     <Textarea placeholder="e.g., 1 apple and a protein bar before the run" {...field} />
                   </FormControl>
@@ -135,7 +161,7 @@ export function ExplainBehaviorTab() {
               name="otherFactors"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Other Factors (Optional)</FormLabel>
+                  <FormLabel>{otherFactorsLabel}</FormLabel>
                   <FormControl>
                     <Textarea placeholder="e.g., Feeling stressed, poor sleep" {...field} />
                   </FormControl>
@@ -146,7 +172,7 @@ export function ExplainBehaviorTab() {
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={isPending} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              Get Explanation
+              {buttonText}
             </Button>
           </CardFooter>
         </form>
@@ -154,23 +180,14 @@ export function ExplainBehaviorTab() {
       {(isPending || aiResponse) && (
         <AIResponse
           isLoading={isPending}
-          title="AI-Generated Explanation"
-          description="Here's a breakdown of the potential factors."
+          title={aiTitle}
+          description={aiDescription}
         >
           {aiResponse && (
             <div className="space-y-4 text-sm">
-                <div>
-                    <h3 className="font-bold text-base text-primary">Explanation</h3>
-                    <p className="text-foreground/90">{aiResponse.explanation}</p>
-                </div>
-                <div>
-                    <h3 className="font-bold text-base text-primary">Reasons</h3>
-                    <p className="text-foreground/90">{aiResponse.reasons}</p>
-                </div>
-                <div>
-                    <h3 className="font-bold text-base text-primary">Suggestions</h3>
-                    <p className="text-foreground/90">{aiResponse.suggestions}</p>
-                </div>
+              <TranslatedResponse title="Explanation" text={aiResponse.explanation} />
+              <TranslatedResponse title="Reasons" text={aiResponse.reasons} />
+              <TranslatedResponse title="Suggestions" text={aiResponse.suggestions} />
             </div>
           )}
         </AIResponse>

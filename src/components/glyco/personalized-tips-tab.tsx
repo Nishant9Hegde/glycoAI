@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ACTIVITY_LEVELS, DIETARY_HABITS } from '@/lib/constants';
 import { AIResponse } from './ai-response';
 import { type PersonalizedTipsOutput } from '@/ai/flows/provide-personalized-tips';
+import { useTranslation } from '@/hooks/use-translation';
 
 const TipsSchema = z.object({
   unitsConsumed: z.coerce.number().min(0, 'Please enter units consumed.'),
@@ -28,11 +29,36 @@ const TipsSchema = z.object({
 
 type TipsFormValues = z.infer<typeof TipsSchema>;
 
+const TranslatedSelectItem = ({ item }: { item: string }) => {
+  const { translatedText } = useTranslation(item);
+  return <SelectItem value={item}>{translatedText}</SelectItem>;
+}
+
+const TranslatedListItem = ({ text }: { text: string }) => {
+  const { translatedText } = useTranslation(text);
+  return <li>{translatedText}</li>;
+}
+
 export function PersonalizedTipsTab() {
   const { userData } = useUserData();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<PersonalizedTipsOutput | null>(null);
+
+  const { translatedText: title } = useTranslation('Personalized Tips & Suggestions');
+  const { translatedText: description } = useTranslation('Provide your recent data to receive AI-generated tips for naturally maintaining your blood glucose levels.');
+  const { translatedText: unitsLabel } = useTranslation('Total Insulin Units (Last 24h)');
+  const { translatedText: glucoseLabel } = useTranslation('Recent Glucose Levels (mg/dL)');
+  const { translatedText: activityLabel } = useTranslation('Activity Level');
+  const { translatedText: dietLabel } = useTranslation('Dietary Habits');
+  const { translatedText: activityPlaceholder } = useTranslation('Select activity level');
+  const { translatedText: dietPlaceholder } = useTranslation('Select dietary habit');
+  const { translatedText: buttonText } = useTranslation('Generate Tips');
+  const { translatedText: aiTitle } = useTranslation('Your Personalized Health Tips');
+  const { translatedText: aiDescription } = useTranslation('Here are some suggestions based on your data.');
+  const { translatedText: missingInfoTitle } = useTranslation('Missing Information');
+  const { translatedText: missingInfoDesc } = useTranslation('Please complete your biodata on the left before getting tips.');
+  const { translatedText: errorTitle } = useTranslation('Error');
 
   const form = useForm<TipsFormValues>({
     resolver: zodResolver(TipsSchema),
@@ -48,8 +74,8 @@ export function PersonalizedTipsTab() {
     if (!userData.age || !userData.weight || !userData.height || !userData.insulinBrand) {
       toast({
         variant: 'destructive',
-        title: 'Missing Information',
-        description: 'Please complete your biodata on the left before getting tips.',
+        title: missingInfoTitle,
+        description: missingInfoDesc,
       });
       return;
     }
@@ -66,7 +92,7 @@ export function PersonalizedTipsTab() {
       } else {
         toast({
           variant: 'destructive',
-          title: 'Error',
+          title: errorTitle,
           description: result.error,
         });
       }
@@ -78,8 +104,8 @@ export function PersonalizedTipsTab() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardHeader>
-            <CardTitle>Personalized Tips & Suggestions</CardTitle>
-            <CardDescription>Provide your recent data to receive AI-generated tips for naturally maintaining your blood glucose levels.</CardDescription>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
              <FormField
@@ -87,7 +113,7 @@ export function PersonalizedTipsTab() {
               name="unitsConsumed"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Total Insulin Units (Last 24h)</FormLabel>
+                  <FormLabel>{unitsLabel}</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="e.g., 25" {...field} />
                   </FormControl>
@@ -100,7 +126,7 @@ export function PersonalizedTipsTab() {
               name="recentGlucoseLevels"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Recent Glucose Levels (mg/dL)</FormLabel>
+                  <FormLabel>{glucoseLabel}</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., 110, 145, 95" {...field} />
                   </FormControl>
@@ -114,16 +140,16 @@ export function PersonalizedTipsTab() {
                 name="activityLevels"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Activity Level</FormLabel>
+                    <FormLabel>{activityLabel}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select activity level" />
+                          <SelectValue placeholder={activityPlaceholder} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {ACTIVITY_LEVELS.map(level => (
-                          <SelectItem key={level} value={level}>{level}</SelectItem>
+                          <TranslatedSelectItem key={level} item={level} />
                         ))}
                       </SelectContent>
                     </Select>
@@ -136,16 +162,16 @@ export function PersonalizedTipsTab() {
                 name="dietaryHabits"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Dietary Habits</FormLabel>
+                    <FormLabel>{dietLabel}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select dietary habit" />
+                          <SelectValue placeholder={dietPlaceholder} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {DIETARY_HABITS.map(habit => (
-                          <SelectItem key={habit} value={habit}>{habit}</SelectItem>
+                          <TranslatedSelectItem key={habit} item={habit} />
                         ))}
                       </SelectContent>
                     </Select>
@@ -157,7 +183,7 @@ export function PersonalizedTipsTab() {
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={isPending} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              Generate Tips
+              {buttonText}
             </Button>
           </CardFooter>
         </form>
@@ -165,13 +191,13 @@ export function PersonalizedTipsTab() {
       {(isPending || aiResponse) && (
         <AIResponse
           isLoading={isPending}
-          title="Your Personalized Health Tips"
-          description="Here are some suggestions based on your data."
+          title={aiTitle}
+          description={aiDescription}
         >
           {aiResponse && (
             <ul className="list-disc space-y-2 pl-5 text-sm text-foreground/90">
               {aiResponse.tips.map((tip, index) => (
-                <li key={index}>{tip}</li>
+                <TranslatedListItem key={index} text={tip} />
               ))}
             </ul>
           )}

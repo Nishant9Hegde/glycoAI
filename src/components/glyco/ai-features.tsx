@@ -6,22 +6,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PersonalizedTipsTab } from "@/components/glyco/personalized-tips-tab";
 import { ExplainBehaviorTab } from "@/components/glyco/explain-behavior-tab";
 import { SuggestSolutionsTab } from "@/components/glyco/suggest-solutions-tab";
+import { useTranslation } from "@/hooks/use-translation";
 
 export function AIFeatures() {
+  const { translatedText: tipsTab } = useTranslation('Personalized Tips');
+  const { translatedText: explainTab } = useTranslation('Explain Behavior');
+  const { translatedText: solutionsTab } = useTranslation('Suggest Solutions');
+
   return (
     <Tabs defaultValue="tips" className="w-full">
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="tips">
           <Lightbulb className="mr-2 h-4 w-4" />
-          Personalized Tips
+          {tipsTab}
         </TabsTrigger>
         <TabsTrigger value="explain">
           <HelpCircle className="mr-2 h-4 w-4" />
-          Explain Behavior
+          {explainTab}
         </TabsTrigger>
         <TabsTrigger value="solutions">
           <Wrench className="mr-2 h-4 w-4" />
-          Suggest Solutions
+          {solutionsTab}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="tips">
