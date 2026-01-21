@@ -1,4 +1,3 @@
-
 import { Droplets, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,8 +26,8 @@ export function Header() {
             </SelectTrigger>
             <SelectContent align="end">
               <SelectItem value="en">English</SelectItem>
-              <SelectItem value="es">Español</SelectItem>
-              <SelectItem value="fr">Français</SelectItem>
+              <SelectItem value="hi">Hindi</SelectItem>
+              <SelectItem value="kn">Kannada</SelectItem>
             </SelectContent>
           </Select>
         </div>
