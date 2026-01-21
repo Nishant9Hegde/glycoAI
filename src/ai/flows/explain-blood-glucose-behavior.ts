@@ -19,6 +19,11 @@ const ExplainBloodGlucoseBehaviorInputSchema = z.object({
   insulinUnits: z.number().describe('The units of insulin consumed.'),
   foodIntake: z.string().describe('Description of food intake.'),
   otherFactors: z.string().optional().describe('Any other relevant factors.'),
+  targetLanguage: z
+    .string()
+    .describe(
+      'The target language for the response (e.g., "Hindi", "English").'
+    ),
 });
 export type ExplainBloodGlucoseBehaviorInput = z.infer<
   typeof ExplainBloodGlucoseBehaviorInputSchema
@@ -43,12 +48,16 @@ const prompt = ai.definePrompt({
   name: 'explainBloodGlucoseBehaviorPrompt',
   input: {schema: ExplainBloodGlucoseBehaviorInputSchema},
   output: {schema: ExplainBloodGlucoseBehaviorOutputSchema},
-  prompt: `You are a medical expert specialized in diabetes.\n
-You will use this information to explain the unusual blood glucose behavior, provide suggestions to manage it, and state the reasons for the behavior.\n\nBlood Glucose Level: {{bloodGlucoseLevel}} mg/dL
+  prompt: `You are a medical expert specialized in diabetes.
+You will use this information to explain the unusual blood glucose behavior, provide suggestions to manage it, and state the reasons for the behavior, all in {{targetLanguage}}.
+
+Blood Glucose Level: {{bloodGlucoseLevel}} mg/dL
 Activity: {{activity}}
 Insulin Units: {{insulinUnits}}
 Food Intake: {{foodIntake}}
-Other Factors: {{otherFactors}}\n\nExplanation:
+Other Factors: {{otherFactors}}
+
+Explanation:
 Suggestions:
 Reasons:`,
 });

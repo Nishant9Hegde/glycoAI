@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUserData } from '@/context/user-data-context';
-import { getBloodGlucoseExplanation, getTranslation } from '@/app/actions';
+import { getBloodGlucoseExplanation } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -41,8 +41,7 @@ export function ExplainBehaviorTab() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<ExplainBloodGlucoseBehaviorOutput | null>(null);
-  const [translatedResponse, setTranslatedResponse] = useState<ExplainBloodGlucoseBehaviorOutput | null>(null);
-
+  
   const { language } = useLanguage();
 
   const { translatedText: title } = useTranslation('Explain Unusual Behavior');
@@ -83,9 +82,11 @@ export function ExplainBehaviorTab() {
       return;
     }
     setAiResponse(null);
-    setTranslatedResponse(null);
     startTransition(async () => {
-      const result = await getBloodGlucoseExplanation(values);
+      const result = await getBloodGlucoseExplanation({
+        ...values,
+        targetLanguage: getLanguageName(language),
+      });
       if (result.success) {
         setAiResponse(result.data);
       } else {
@@ -97,37 +98,6 @@ export function ExplainBehaviorTab() {
       }
     });
   };
-
-  useEffect(() => {
-    if (!aiResponse) {
-      setTranslatedResponse(null);
-      return;
-    }
-    if (language === 'en') {
-      setTranslatedResponse(aiResponse);
-      return;
-    }
-
-    const translateResponse = async () => {
-      startTransition(async () => {
-        const texts = [aiResponse.explanation, aiResponse.reasons, aiResponse.suggestions];
-        const langName = getLanguageName(language);
-        const result = await getTranslation({ texts: texts, targetLanguage: langName });
-
-        if (result.success) {
-          setTranslatedResponse({
-            explanation: result.data.translatedTexts[0],
-            reasons: result.data.translatedTexts[1],
-            suggestions: result.data.translatedTexts[2],
-          });
-        } else {
-          setTranslatedResponse(aiResponse);
-        }
-      });
-    };
-
-    translateResponse();
-  }, [aiResponse, language]);
 
   return (
     <Card>
@@ -213,25 +183,25 @@ export function ExplainBehaviorTab() {
           </CardFooter>
         </form>
       </Form>
-      {(isPending || translatedResponse) && (
+      {(isPending || aiResponse) && (
         <AIResponse
-          isLoading={isPending && !translatedResponse}
+          isLoading={isPending && !aiResponse}
           title={aiTitle}
           description={aiDescription}
         >
-          {translatedResponse && (
+          {aiResponse && (
             <div className="space-y-4 text-sm">
               <div>
                 <h3 className="font-bold text-base text-primary">{explanationTitle}</h3>
-                <p className="text-foreground/90">{translatedResponse.explanation}</p>
+                <p className="text-foreground/90">{aiResponse.explanation}</p>
               </div>
               <div>
                 <h3 className="font-bold text-base text-primary">{reasonsTitle}</h3>
-                <p className="text-foreground/90">{translatedResponse.reasons}</p>
+                <p className="text-foreground/90">{aiResponse.reasons}</p>
               </div>
               <div>
                 <h3 className="font-bold text-base text-primary">{suggestionsTitle}</h3>
-                <p className="text-foreground/90">{translatedResponse.suggestions}</p>
+                <p className="text-foreground/90">{aiResponse.suggestions}</p>
               </div>
             </div>
           )}

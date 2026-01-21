@@ -20,6 +20,11 @@ const SuggestSolutionsForIssuesInputSchema = z.object({
   height: z.number().describe('The user height in cm'),
   weight: z.number().describe('The user weight in kg'),
   age: z.number().describe('The user age in years'),
+  targetLanguage: z
+    .string()
+    .describe(
+      'The target language for the response (e.g., "Hindi", "English").'
+    ),
 });
 export type SuggestSolutionsForIssuesInput = z.infer<
   typeof SuggestSolutionsForIssuesInputSchema
@@ -51,7 +56,7 @@ const prompt = ai.definePrompt({
   name: 'suggestSolutionsForIssuesPrompt',
   input: {schema: SuggestSolutionsForIssuesInputSchema},
   output: {schema: SuggestSolutionsForIssuesOutputSchema},
-  prompt: `You are a diabetes management expert. Based on the issue the user is experiencing, suggest some solutions.
+  prompt: `You are a diabetes management expert. Based on the issue the user is experiencing, suggest some solutions. Your entire response should be in {{targetLanguage}}.
 
   Issue: {{{issue}}}
   Insulin Brand: {{{insulinBrand}}}
@@ -61,7 +66,8 @@ const prompt = ai.definePrompt({
 
   Provide a list of solutions and explain why those solutions are relevant to the issue. Focus on lifestyle adjustments and insulin dosage adjustments.
   Format the solutions as a bulleted list.
-  \n  Solutions:
+  
+  Solutions:
   `
 });
 

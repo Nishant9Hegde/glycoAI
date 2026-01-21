@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUserData } from '@/context/user-data-context';
-import { getPersonalizedTips, getTranslation } from '@/app/actions';
+import { getPersonalizedTips } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -48,7 +48,6 @@ export function PersonalizedTipsTab() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<PersonalizedTipsOutput | null>(null);
-  const [translatedTips, setTranslatedTips] = useState<string[] | null>(null);
 
   const { language } = useLanguage();
 
@@ -87,12 +86,12 @@ export function PersonalizedTipsTab() {
       return;
     }
     setAiResponse(null);
-    setTranslatedTips(null);
     startTransition(async () => {
       const dataForAI = {
         ...userData,
         ...values,
         recentGlucoseLevels: values.recentGlucoseLevels.split(',').map(v => parseInt(v.trim(), 10)),
+        targetLanguage: getLanguageName(language),
       };
       const result = await getPersonalizedTips(dataForAI);
       if (result.success) {
@@ -106,42 +105,6 @@ export function PersonalizedTipsTab() {
       }
     });
   };
-
-  useEffect(() => {
-    if (!aiResponse) {
-      setTranslatedTips(null);
-      return;
-    }
-    if (language === 'en') {
-      setTranslatedTips(aiResponse.tips);
-      return;
-    }
-
-    const translateResponse = async () => {
-      startTransition(async () => {
-        const langName = getLanguageName(language);
-        const chunkSize = 10;
-        let allTranslatedTexts: string[] = [];
-
-        for (let i = 0; i < aiResponse.tips.length; i += chunkSize) {
-            const chunk = aiResponse.tips.slice(i, i + chunkSize);
-            const result = await getTranslation({ texts: chunk, targetLanguage: langName });
-            if (result.success && result.data.translatedTexts.length === chunk.length) {
-                allTranslatedTexts.push(...result.data.translatedTexts);
-            } else {
-                console.error('Failed to translate tips chunk', result.error);
-                allTranslatedTexts.push(...chunk);
-            }
-            if (aiResponse.tips.length > chunkSize) {
-                await new Promise(resolve => setTimeout(resolve, 200));
-            }
-        }
-        setTranslatedTips(allTranslatedTexts);
-      });
-    };
-
-    translateResponse();
-  }, [aiResponse, language]);
 
   return (
     <Card>
@@ -232,15 +195,15 @@ export function PersonalizedTipsTab() {
           </CardFooter>
         </form>
       </Form>
-      {(isPending || translatedTips) && (
+      {(isPending || aiResponse) && (
         <AIResponse
-          isLoading={isPending && !translatedTips}
+          isLoading={isPending && !aiResponse}
           title={aiTitle}
           description={aiDescription}
         >
-          {translatedTips && (
+          {aiResponse && (
             <ul className="list-disc space-y-2 pl-5 text-sm text-foreground/90">
-              {translatedTips.map((tip, index) => (
+              {aiResponse.tips.map((tip, index) => (
                 <li key={index}>{tip}</li>
               ))}
             </ul>

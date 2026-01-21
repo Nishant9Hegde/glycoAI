@@ -20,6 +20,11 @@ const PersonalizedTipsInputSchema = z.object({
   recentGlucoseLevels: z.array(z.number()).describe('An array of recent blood glucose levels of the patient.'),
   activityLevels: z.string().describe('The activity levels of the patient (e.g., sedentary, moderate, active).'),
   dietaryHabits: z.string().describe('The dietary habits of the patient (e.g., low carb, high protein).'),
+  targetLanguage: z
+    .string()
+    .describe(
+      'The target language for the response (e.g., "Hindi", "English").'
+    ),
 });
 export type PersonalizedTipsInput = z.infer<typeof PersonalizedTipsInputSchema>;
 
@@ -50,7 +55,7 @@ const prompt = ai.definePrompt({
   - Activity Levels: {{activityLevels}}
   - Dietary Habits: {{dietaryHabits}}
 
-  Provide the tips in a concise and easy-to-understand manner.
+  Provide the tips in a concise and easy-to-understand manner, in the {{targetLanguage}} language.
   `, // the tips will be returned in the tips field
 });
 

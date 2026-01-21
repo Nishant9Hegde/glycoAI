@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUserData } from '@/context/user-data-context';
-import { getSolutionsForIssues, getTranslation } from '@/app/actions';
+import { getSolutionsForIssues } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -42,7 +42,6 @@ export function SuggestSolutionsTab() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<SuggestSolutionsForIssuesOutput | null>(null);
-  const [translatedResponse, setTranslatedResponse] = useState<(SuggestSolutionsForIssuesOutput & { solutions: string[] }) | null>(null);
 
   const { language } = useLanguage();
 
@@ -81,11 +80,11 @@ export function SuggestSolutionsTab() {
       return;
     }
     setAiResponse(null);
-    setTranslatedResponse(null);
     startTransition(async () => {
       const dataForAI = {
         ...userData,
         ...values,
+        targetLanguage: getLanguageName(language),
       };
       const result = await getSolutionsForIssues(dataForAI);
       if (result.success) {
@@ -99,53 +98,6 @@ export function SuggestSolutionsTab() {
       }
     });
   };
-
-  useEffect(() => {
-    if (!aiResponse) {
-      setTranslatedResponse(null);
-      return;
-    }
-    if (language === 'en') {
-      setTranslatedResponse(aiResponse);
-      return;
-    }
-
-    const translateResponse = async () => {
-      startTransition(async () => {
-        const textsToTranslate = [aiResponse.explanation, ...aiResponse.solutions];
-        const langName = getLanguageName(language);
-        const chunkSize = 10;
-        let allTranslatedTexts: string[] = [];
-
-        for (let i = 0; i < textsToTranslate.length; i += chunkSize) {
-            const chunk = textsToTranslate.slice(i, i + chunkSize);
-            const result = await getTranslation({ texts: chunk, targetLanguage: langName });
-            if (result.success && result.data.translatedTexts.length === chunk.length) {
-                allTranslatedTexts.push(...result.data.translatedTexts);
-            } else {
-                console.error('Failed to translate solutions chunk', result.error);
-                allTranslatedTexts.push(...chunk);
-            }
-            if (textsToTranslate.length > chunkSize) {
-                await new Promise(resolve => setTimeout(resolve, 200));
-            }
-        }
-        
-        const [translatedExplanation, ...translatedSolutions] = allTranslatedTexts;
-        if (translatedExplanation !== undefined) {
-          setTranslatedResponse({
-            explanation: translatedExplanation,
-            solutions: translatedSolutions,
-          });
-        } else {
-            setTranslatedResponse(aiResponse); // Fallback
-        }
-      });
-    };
-
-    translateResponse();
-  }, [aiResponse, language]);
-
 
   return (
     <Card>
@@ -186,25 +138,25 @@ export function SuggestSolutionsTab() {
           </CardFooter>
         </form>
       </Form>
-      {(isPending || translatedResponse) && (
+      {(isPending || aiResponse) && (
         <AIResponse
-          isLoading={isPending && !translatedResponse}
+          isLoading={isPending && !aiResponse}
           title={aiTitle}
           description={aiDescription}
         >
-          {translatedResponse && (
+          {aiResponse && (
             <div className="space-y-4 text-sm">
                 <div>
                     <h3 className="font-bold text-base text-primary">{solutionsTitle}</h3>
                     <ul className="list-disc space-y-2 pl-5 text-foreground/90">
-                        {translatedResponse.solutions.map((solution, index) => (
+                        {aiResponse.solutions.map((solution, index) => (
                             <li key={index}>{solution}</li>
                         ))}
                     </ul>
                 </div>
                 <div>
                     <h3 className="font-bold text-base text-primary">{explanationTitle}</h3>
-                    <p className="text-foreground/90">{translatedResponse.explanation}</p>
+                    <p className="text-foreground/90">{aiResponse.explanation}</p>
                 </div>
             </div>
           )}
