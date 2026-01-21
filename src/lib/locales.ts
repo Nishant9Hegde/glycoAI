@@ -51,8 +51,8 @@ export const stringsToTranslate = [
   'For the issue:',
 
   // from user-data-form.tsx
-  'Your Biodata',
-  'This information helps the AI provide personalized advice. It is not stored anywhere.',
+  'Your Health Profile',
+  'Tell us a bit about you to unlock personalized AI insights for your health journey. This data stays on your device.',
   'Age',
   'Weight (kg)',
   'Height (ft)',

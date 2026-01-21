@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUserData } from '@/context/user-data-context';
@@ -7,16 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { INSULIN_BRANDS } from '@/lib/constants';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useTranslation } from '@/hooks/use-translation';
+import { ClipboardList } from 'lucide-react';
 
 export function UserDataForm() {
   const { userData, setUserData } = useUserData();
-  const avatarImage = PlaceHolderImages.find(img => img.id === 'user-avatar');
 
-  const { translatedText: title } = useTranslation('Your Biodata');
-  const { translatedText: description } = useTranslation('This information helps the AI provide personalized advice. It is not stored anywhere.');
+  const { translatedText: title } = useTranslation('Your Health Profile');
+  const { translatedText: description } = useTranslation('Tell us a bit about you to unlock personalized AI insights for your health journey. This data stays on your device.');
   const { translatedText: ageLabel } = useTranslation('Age');
   const { translatedText: weightLabel } = useTranslation('Weight (kg)');
   const { translatedText: heightFtLabel } = useTranslation('Height (ft)');
@@ -36,11 +33,10 @@ export function UserDataForm() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center gap-4">
-        <Avatar className="h-16 w-16">
-          {avatarImage && <AvatarImage src={avatarImage.imageUrl} alt={avatarImage.description} data-ai-hint={avatarImage.imageHint}/>}
-          <AvatarFallback>YOU</AvatarFallback>
-        </Avatar>
+      <CardHeader className="flex flex-row items-start gap-4">
+        <div className="bg-primary/10 p-3 rounded-full">
+          <ClipboardList className="h-6 w-6 text-primary" />
+        </div>
         <div>
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>

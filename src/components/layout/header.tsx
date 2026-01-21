@@ -1,17 +1,14 @@
 'use client';
 
-import { Droplets, Globe } from "lucide-react";
+import { Droplets, Globe, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useLanguage, type Language } from "@/context/language-context";
 import { useTranslation } from "@/hooks/use-translation";
 
 export function Header() {
-  const avatarImage = PlaceHolderImages.find(img => img.id === 'user-avatar');
   const { language, setLanguage } = useLanguage();
 
   const { translatedText: myAccountLabel } = useTranslation('My Account');
@@ -44,10 +41,7 @@ export function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
-              <Avatar>
-                {avatarImage && <AvatarImage src={avatarImage.imageUrl} alt={avatarImage.description} data-ai-hint={avatarImage.imageHint} />}
-                <AvatarFallback>U</AvatarFallback>
-              </Avatar>
+              <User className="h-5 w-5" />
               <span className="sr-only">Toggle user menu</span>
             </Button>
           </DropdownMenuTrigger>
