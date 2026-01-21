@@ -17,6 +17,11 @@ import { AIResponse } from './ai-response';
 import { type ExplainBloodGlucoseBehaviorOutput } from '@/ai/flows/explain-blood-glucose-behavior';
 import { useTranslation } from '@/hooks/use-translation';
 import { useLanguage } from '@/context/language-context';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { INDIAN_FOODS } from '@/lib/constants';
 
 const ExplainBehaviorSchema = z.object({
   bloodGlucoseLevel: z.coerce.number().min(1, 'Please enter a valid blood glucose level.'),
@@ -37,11 +42,41 @@ function getLanguageName(code: string): string {
     }
 }
 
+const FoodCommandItem = ({ food, currentFieldValue, onValueChange }: { food: { value: string, label: string }, currentFieldValue: string, onValueChange: (value: string) => void }) => {
+    const { translatedText } = useTranslation(food.label);
+    return (
+        <CommandItem
+            key={food.value}
+            value={food.label}
+            onSelect={(currentValue) => {
+                onValueChange(currentValue === currentFieldValue ? "" : currentValue);
+            }}
+        >
+            <Check
+                className={cn(
+                    "mr-2 h-4 w-4",
+                    currentFieldValue === food.label ? "opacity-100" : "opacity-0"
+                )}
+            />
+            {translatedText}
+        </CommandItem>
+    );
+};
+
+const DisplaySelectedFood = ({ value }: { value: string }) => {
+    const { translatedText } = useTranslation(INDIAN_FOODS.find(
+        (food) => food.label.toLowerCase() === value.toLowerCase()
+    )?.label);
+    return <>{translatedText || value}</>;
+}
+
+
 export function ExplainBehaviorTab() {
   const { userData } = useUserData();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<ExplainBloodGlucoseBehaviorOutput | null>(null);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   
   const { language } = useLanguage();
 
@@ -61,6 +96,10 @@ export function ExplainBehaviorTab() {
   const { translatedText: explanationTitle } = useTranslation('Explanation');
   const { translatedText: reasonsTitle } = useTranslation('Reasons');
   const { translatedText: suggestionsTitle } = useTranslation('Suggestions');
+  const { translatedText: selectFoodPlaceholder } = useTranslation('Select food...');
+  const { translatedText: nothingFoundText } = useTranslation('Nothing found.');
+  const { translatedText: searchFoodPlaceholder } = useTranslation('Search food...');
+
 
   const form = useForm<ExplainBehaviorFormValues>({
     resolver: zodResolver(ExplainBehaviorSchema),
@@ -154,11 +193,46 @@ export function ExplainBehaviorTab() {
               control={form.control}
               name="foodIntake"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>{foodLabel}</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="e.g., 1 apple and a protein bar before the run" {...field} />
-                  </FormControl>
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? <DisplaySelectedFood value={field.value} /> : selectFoodPlaceholder}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                      <Command>
+                        <CommandInput placeholder={searchFoodPlaceholder} />
+                        <CommandList>
+                            <CommandEmpty>{nothingFoundText}</CommandEmpty>
+                            <CommandGroup>
+                            {INDIAN_FOODS.map((food) => (
+                                <FoodCommandItem 
+                                    key={food.value}
+                                    food={food}
+                                    currentFieldValue={field.value}
+                                    onValueChange={(value) => {
+                                        field.onChange(value);
+                                        setPopoverOpen(false);
+                                    }}
+                                />
+                            ))}
+                            </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}

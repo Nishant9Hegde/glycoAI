@@ -1,5 +1,5 @@
 
-import { ACTIVITY_LEVELS, COMMON_ISSUES, DIETARY_HABITS } from './constants';
+import { ACTIVITY_LEVELS, COMMON_ISSUES, DIETARY_HABITS, INDIAN_FOODS } from './constants';
 
 export const stringsToTranslate = [
   // from ai-features.tsx
@@ -24,6 +24,9 @@ export const stringsToTranslate = [
   'Explanation',
   'Reasons',
   'Suggestions',
+  'Select food...',
+  'Search food...',
+  'Nothing found.',
 
   // from personalized-tips-tab.tsx
   'Personalized Tips & Suggestions',
@@ -69,5 +72,6 @@ export const stringsToTranslate = [
   // from constants.ts
   ...ACTIVITY_LEVELS,
   ...DIETARY_HABITS,
-  ...COMMON_ISSUES
+  ...COMMON_ISSUES,
+  ...INDIAN_FOODS.map(food => food.label),
 ].filter((v, i, a) => a.indexOf(v) === i); // Ensure unique strings
