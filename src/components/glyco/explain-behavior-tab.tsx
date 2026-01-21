@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useTransition } from 'react';
@@ -73,7 +74,7 @@ export function ExplainBehaviorTab() {
   });
 
   const onSubmit = (values: ExplainBehaviorFormValues) => {
-    if (!userData.age || !userData.weight || !userData.height) {
+    if (!userData.age || !userData.weight || userData.heightFt === undefined || userData.heightIn === undefined) {
       toast({
         variant: 'destructive',
         title: missingInfoTitle,

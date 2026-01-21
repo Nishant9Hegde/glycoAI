@@ -1,6 +1,7 @@
 
 export interface UserData {
-  height?: number;
+  heightFt?: number;
+  heightIn?: number;
   weight?: number;
   age?: number;
   insulinBrand: string;

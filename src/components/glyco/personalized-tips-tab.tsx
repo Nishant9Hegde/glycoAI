@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useTransition } from 'react';
@@ -14,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ACTIVITY_LEVELS, DIETARY_HABITS } from '@/lib/constants';
 import { AIResponse } from './ai-response';
-import { type PersonalizedTipsOutput } from '@/ai/flows/provide-personalized-tips';
+import { type PersonalizedTipsInput, type PersonalizedTipsOutput } from '@/ai/flows/provide-personalized-tips';
 import { useTranslation } from '@/hooks/use-translation';
 import { useLanguage } from '@/context/language-context';
 
@@ -77,7 +78,7 @@ export function PersonalizedTipsTab() {
   });
 
   const onSubmit = (values: TipsFormValues) => {
-    if (!userData.age || !userData.weight || !userData.height || !userData.insulinBrand) {
+    if (!userData.age || !userData.weight || userData.heightFt === undefined || userData.heightIn === undefined || !userData.insulinBrand) {
       toast({
         variant: 'destructive',
         title: missingInfoTitle,
@@ -87,8 +88,12 @@ export function PersonalizedTipsTab() {
     }
     setAiResponse(null);
     startTransition(async () => {
-      const dataForAI = {
-        ...userData,
+      const heightInCm = (userData.heightFt! * 30.48) + (userData.heightIn! * 2.54);
+      const dataForAI: PersonalizedTipsInput = {
+        height: heightInCm,
+        weight: userData.weight!,
+        age: userData.age!,
+        insulinBrand: userData.insulinBrand,
         ...values,
         recentGlucoseLevels: values.recentGlucoseLevels.split(',').map(v => parseInt(v.trim(), 10)),
         targetLanguage: getLanguageName(language),

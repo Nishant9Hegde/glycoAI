@@ -13,7 +13,8 @@ const UserDataContext = createContext<UserDataContextProps | undefined>(undefine
 
 export function UserDataProvider({ children }: { children: React.ReactNode }) {
   const [userData, setUserData] = useState<UserData>({
-    height: undefined,
+    heightFt: undefined,
+    heightIn: undefined,
     weight: undefined,
     age: undefined,
     insulinBrand: '',

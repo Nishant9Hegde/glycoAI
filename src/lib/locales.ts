@@ -1,3 +1,4 @@
+
 import { ACTIVITY_LEVELS, COMMON_ISSUES, DIETARY_HABITS } from './constants';
 
 export const stringsToTranslate = [
@@ -54,7 +55,8 @@ export const stringsToTranslate = [
   'This information helps the AI provide personalized advice. It is not stored anywhere.',
   'Age',
   'Weight (kg)',
-  'Height (cm)',
+  'Height (ft)',
+  'Height (in)',
   'Insulin Brand',
   'Select brand',
 

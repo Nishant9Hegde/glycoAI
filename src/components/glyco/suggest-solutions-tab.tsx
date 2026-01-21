@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useTransition } from 'react';
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { COMMON_ISSUES } from '@/lib/constants';
 import { AIResponse } from './ai-response';
-import { type SuggestSolutionsForIssuesOutput } from '@/ai/flows/suggest-solutions-for-issues';
+import { type SuggestSolutionsForIssuesInput, type SuggestSolutionsForIssuesOutput } from '@/ai/flows/suggest-solutions-for-issues';
 import { useTranslation } from '@/hooks/use-translation';
 import { useLanguage } from '@/context/language-context';
 
@@ -71,7 +72,7 @@ export function SuggestSolutionsTab() {
 
 
   const onSubmit = (values: SolutionsFormValues) => {
-    if (!userData.age || !userData.weight || !userData.height || !userData.insulinBrand) {
+    if (!userData.age || !userData.weight || userData.heightFt === undefined || userData.heightIn === undefined || !userData.insulinBrand) {
       toast({
         variant: 'destructive',
         title: missingInfoTitle,
@@ -81,8 +82,12 @@ export function SuggestSolutionsTab() {
     }
     setAiResponse(null);
     startTransition(async () => {
-      const dataForAI = {
-        ...userData,
+      const heightInCm = (userData.heightFt! * 30.48) + (userData.heightIn! * 2.54);
+      const dataForAI: SuggestSolutionsForIssuesInput = {
+        height: heightInCm,
+        weight: userData.weight!,
+        age: userData.age!,
+        insulinBrand: userData.insulinBrand,
         ...values,
         targetLanguage: getLanguageName(language),
       };

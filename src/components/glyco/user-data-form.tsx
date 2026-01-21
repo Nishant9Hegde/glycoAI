@@ -19,13 +19,15 @@ export function UserDataForm() {
   const { translatedText: description } = useTranslation('This information helps the AI provide personalized advice. It is not stored anywhere.');
   const { translatedText: ageLabel } = useTranslation('Age');
   const { translatedText: weightLabel } = useTranslation('Weight (kg)');
-  const { translatedText: heightLabel } = useTranslation('Height (cm)');
+  const { translatedText: heightFtLabel } = useTranslation('Height (ft)');
+  const { translatedText: heightInLabel } = useTranslation('Height (in)');
   const { translatedText: insulinBrandLabel } = useTranslation('Insulin Brand');
   const { translatedText: selectBrandPlaceholder } = useTranslation('Select brand');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setUserData(prev => ({ ...prev, [name]: value ? parseInt(value, 10) : '' }));
+    const numValue = parseInt(value, 10);
+    setUserData(prev => ({ ...prev, [name]: isNaN(numValue) ? undefined : numValue }));
   };
 
   const handleSelectChange = (name: string) => (value: string) => {
@@ -48,16 +50,22 @@ export function UserDataForm() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="age">{ageLabel}</Label>
-            <Input id="age" name="age" type="number" placeholder="e.g., 35" value={userData.age || ''} onChange={handleChange} />
+            <Input id="age" name="age" type="number" placeholder="e.g., 35" value={userData.age ?? ''} onChange={handleChange} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="weight">{weightLabel}</Label>
-            <Input id="weight" name="weight" type="number" placeholder="e.g., 70" value={userData.weight || ''} onChange={handleChange} />
+            <Input id="weight" name="weight" type="number" placeholder="e.g., 70" value={userData.weight ?? ''} onChange={handleChange} />
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="height">{heightLabel}</Label>
-          <Input id="height" name="height" type="number" placeholder="e.g., 175" value={userData.height || ''} onChange={handleChange} />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="heightFt">{heightFtLabel}</Label>
+            <Input id="heightFt" name="heightFt" type="number" placeholder="e.g., 5" value={userData.heightFt ?? ''} onChange={handleChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="heightIn">{heightInLabel}</Label>
+            <Input id="heightIn" name="heightIn" type="number" placeholder="e.g., 9" value={userData.heightIn ?? ''} onChange={handleChange} />
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="insulinBrand">{insulinBrandLabel}</Label>
