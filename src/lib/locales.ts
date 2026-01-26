@@ -2,6 +2,12 @@
 import { ACTIVITY_LEVELS, COMMON_ISSUES, DIETARY_HABITS, INDIAN_FOODS } from './constants';
 
 export const stringsToTranslate = [
+  // Sidebar
+  'Dashboard',
+  'Log',
+  'Calculator',
+  'Settings',
+
   // from ai-features.tsx
   'Personalized Tips',
   'Explain Behavior',
