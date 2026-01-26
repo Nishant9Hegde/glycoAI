@@ -6,8 +6,6 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Dashboard } from "@/components/glyco/dashboard";
 import { Header } from "@/components/layout/header";
-import { LanguageProvider } from "@/context/language-context";
-import { TranslationProvider } from "@/context/translation-context";
 import Loading from './loading';
 
 export default function Home() {
@@ -47,15 +45,11 @@ export default function Home() {
   }
 
   return (
-    <LanguageProvider>
-      <TranslationProvider>
-        <div className="flex min-h-screen w-full flex-col">
-          <Header />
-          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-            <Dashboard />
-          </main>
-        </div>
-      </TranslationProvider>
-    </LanguageProvider>
+    <div className="flex min-h-screen w-full flex-col">
+      <Header />
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        <Dashboard />
+      </main>
+    </div>
   );
 }

@@ -4,6 +4,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
+import { LanguageProvider } from "@/context/language-context";
+import { TranslationProvider } from "@/context/translation-context";
 
 export const metadata: Metadata = {
   title: "InsuTech",
@@ -27,8 +29,12 @@ export default function RootLayout({
       </head>
       <body className={cn("font-body antialiased")}>
         <FirebaseClientProvider>
-          {children}
-          <Toaster />
+          <LanguageProvider>
+            <TranslationProvider>
+              {children}
+              <Toaster />
+            </TranslationProvider>
+          </LanguageProvider>
         </FirebaseClientProvider>
       </body>
     </html>
