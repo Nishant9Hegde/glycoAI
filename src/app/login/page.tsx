@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Droplets } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import Loading from '../loading';
 import { useToast } from '@/hooks/use-toast';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -132,7 +132,7 @@ export default function LoginPage() {
           <Card>
             <CardHeader className="text-center">
                 <div className='flex justify-center items-center mb-4'>
-                    <Droplets className="h-10 w-10 text-primary" />
+                    <Activity className="h-10 w-10 text-primary" />
                 </div>
               <CardTitle className="text-2xl font-bold">Welcome Back!</CardTitle>
               <CardDescription>Sign in to continue to your dashboard</CardDescription>
@@ -178,7 +178,7 @@ export default function LoginPage() {
             <Card>
                 <CardHeader className="text-center">
                     <div className='flex justify-center items-center mb-4'>
-                        <Droplets className="h-10 w-10 text-primary" />
+                        <Activity className="h-10 w-10 text-primary" />
                     </div>
                   <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
                   <CardDescription>Enter your details to get started.</CardDescription>

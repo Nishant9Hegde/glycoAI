@@ -1,12 +1,12 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { Droplets } from "lucide-react";
+import { Activity } from "lucide-react";
 
 export default function Loading() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
         <div className="flex items-center gap-2 font-semibold">
-          <Droplets className="h-6 w-6 text-primary" />
+          <Activity className="h-6 w-6 text-primary" />
           <span className="font-headline text-lg">InsuTech</span>
         </div>
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">

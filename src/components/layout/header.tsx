@@ -1,6 +1,6 @@
 'use client';
 
-import { Droplets, Globe, LogOut } from "lucide-react";
+import { Activity, Globe, LogOut } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -32,7 +32,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
       <Link href="/" className="flex items-center gap-2 font-semibold">
-        <Droplets className="h-6 w-6 text-primary" />
+        <Activity className="h-6 w-6 text-primary" />
         <span className="font-headline text-lg tracking-wide">InsuTech</span>
       </Link>
       <div className="ml-auto flex items-center gap-4">
