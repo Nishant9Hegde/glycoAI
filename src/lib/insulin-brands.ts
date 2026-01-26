@@ -5,6 +5,7 @@ export const INSULIN_TYPES: Record<string, string[]> = {
         'Humalog',
         'Apidra',
         'Lyumjev',
+        'InsuQuick',
     ],
     'Short-acting': [
         'Humulin R',
