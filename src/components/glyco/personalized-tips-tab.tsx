@@ -109,7 +109,7 @@ export function PersonalizedTipsTab() {
         height: patientData.height,
         weight: patientData.weight,
         age: patientData.age,
-        insulinBrand: patientData.insulinBrand,
+        insulinBrand: (patientData.insulinSelections || []).map((s: any) => s.brand).join(', '),
         ...values,
         recentGlucoseLevels: values.recentGlucoseLevels.split(',').map(v => parseInt(v.trim(), 10)),
         targetLanguage: getLanguageName(language),

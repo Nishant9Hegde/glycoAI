@@ -102,7 +102,7 @@ export function SuggestSolutionsTab() {
         height: patientData.height,
         weight: patientData.weight,
         age: patientData.age,
-        insulinBrand: patientData.insulinBrand,
+        insulinBrand: (patientData.insulinSelections || []).map((s: any) => s.brand).join(', '),
         ...values,
         targetLanguage: getLanguageName(language),
       };

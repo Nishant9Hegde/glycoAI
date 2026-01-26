@@ -4,5 +4,5 @@ export interface UserData {
   heightIn?: number;
   weight?: number;
   age?: number;
-  insulinBrand: string;
+  insulinSelections: { type: string; brand: string }[];
 }

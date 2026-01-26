@@ -22,8 +22,7 @@ export type HealthProfileData = {
   heightIn: string;
   dateOfBirth: Date;
   dateOfDiagnosis: Date;
-  insulinType: string;
-  insulinBrand: string;
+  insulinSelections: { type: string; brand: string }[];
   glucoseDataFile: File | null;
   targetRange: [number, number];
 };
@@ -42,8 +41,7 @@ export default function HealthProfilePage() {
     heightIn: '',
     dateOfBirth: new Date(),
     dateOfDiagnosis: new Date(),
-    insulinType: '',
-    insulinBrand: '',
+    insulinSelections: [],
     glucoseDataFile: null,
     targetRange: [80, 140],
   });
@@ -83,8 +81,7 @@ export default function HealthProfilePage() {
           height: heightInCm,
           dateOfBirth: formData.dateOfBirth.toISOString().split('T')[0],
           dateOfDiagnosis: formData.dateOfDiagnosis.toISOString().split('T')[0],
-          insulinType: formData.insulinType,
-          insulinBrand: formData.insulinBrand,
+          insulinSelections: formData.insulinSelections,
           glucoseDataImageUrl,
           targetGlucoseMin: formData.targetRange[0],
           targetGlucoseMax: formData.targetRange[1],
