@@ -1,0 +1,189 @@
+/**
+ * This ruleset enforces a strict user-ownership model for the GlycoAI application.
+ * All user data, including patient profiles, dosages, and AI-generated content,
+ * is stored within a dedicated user-specific document tree.
+ *
+ * Core Philosophy:
+ * A user has complete control over the data nested under their own user ID (`/users/{userId}`).
+ * They cannot read, write, or even know about the existence of data belonging to any other user.
+ * This provides strong privacy and data isolation by default.
+ *
+ * Data Structure:
+ * All application data is organized hierarchically under the `/users` collection.
+ * The structure is: `/users/{userId}/patients/{patientId}/[subcollections]`.
+ * This nesting ensures that ownership is determined by the document's path, which is
+ * efficient and highly secure.
+ *
+ * Key Security Decisions:
+ * - Strict Ownership: All rules verify that the authenticated user's ID matches the
+ *   `{userId}` wildcard in the path.
+ * - No Public Data: There are no globally readable collections. All access requires
+ *   authentication.
+ * - No User Listing: It is not possible to list documents in the top-level `/users`
+ *   collection, preventing enumeration of the app's user base.
+ * - Authorization-Critical Fields: On creation, we validate that internal ID fields
+ *   (like `patientId`) match the document's path to ensure relational integrity. These
+ *   fields are immutable once set.
+ *
+ * Denormalization for Authorization:
+ * This ruleset relies on the data structure itself for authorization. By nesting all
+ * patient-related data under `/users/{userId}`, we avoid slow and costly `get()` calls
+ * to other documents to verify ownership. The path IS the proof of ownership.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for reusable logic
+    // ===================================
+
+    /**
+     * Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Verifies that the currently authenticated user is the owner of the document
+     * based on the `userId` in the path.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * A robust check for update/delete operations, ensuring the user is the owner
+     * AND the document they are trying to modify actually exists.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * On create, validates that the Patient document's internal `id` field matches
+     * the document ID (`patientId`) in the path. This enforces data consistency.
+     */
+    function isValidPatientCreate(patientId) {
+      return request.resource.data.id == patientId;
+    }
+
+    /**
+     * On update, ensures that the core relational ID of a Patient document
+     * cannot be changed.
+     */
+    function isImmutablePatientFields() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    /**
+     * On create, validates that any subcollection document has a `patientId` field
+     * that matches the parent Patient document's ID from the path.
+     */
+    function isValidSubcollectionCreate(patientId) {
+      return request.resource.data.patientId == patientId;
+    }
+
+    /**
+     * On update, ensures that the `patientId` linking a subcollection document
+     * back to its parent Patient cannot be changed.
+     */
+    function isImmutableSubcollectionFields() {
+      return request.resource.data.patientId == resource.data.patientId;
+    }
+
+    // User Data Scoping
+    // =================
+
+    // The `/users/{userId}` path itself is just a container. Disallow direct
+    // reads or writes to prevent users from creating empty documents or reading
+    // metadata about the subcollections.
+    match /users/{userId} {
+      allow read, write: if false;
+    }
+
+    /**
+     * @description Rules for a user's patient profiles.
+     * @path        /users/{userId}/patients/{patientId}
+     * @allow       (create) A signed-in user creating a patient profile for themselves.
+     * @deny        (get) A user trying to read another user's patient profile.
+     * @principle   Restricts access to a user's own data tree and validates relational integrity.
+     */
+    match /users/{userId}/patients/{patientId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidPatientCreate(patientId);
+      allow update: if isExistingOwner(userId) && isImmutablePatientFields();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for a patient's insulin dosage records.
+     * @path        /users/{userId}/patients/{patientId}/insulinDosages/{insulinDosageId}
+     * @allow       (list) A user listing their own dosage records for one of their patients.
+     * @deny        (create) A user trying to create a dosage record under another user's patient.
+     * @principle   Enforces document ownership via path hierarchy.
+     */
+    match /users/{userId}/patients/{patientId}/insulinDosages/{insulinDosageId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidSubcollectionCreate(patientId);
+      allow update: if isExistingOwner(userId) && isImmutableSubcollectionFields();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for a patient's AI-generated glucose predictions.
+     * @path        /users/{userId}/patients/{patientId}/glucosePredictions/{glucosePredictionId}
+     * @allow       (get) A user reading a specific glucose prediction for their own patient.
+     * @deny        (update) An anonymous user trying to modify a prediction record.
+     * @principle   Enforces document ownership via path hierarchy.
+     */
+    match /users/{userId}/patients/{patientId}/glucosePredictions/{glucosePredictionId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidSubcollectionCreate(patientId);
+      allow update: if isExistingOwner(userId) && isImmutableSubcollectionFields();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for a patient's AI-generated tips.
+     * @path        /users/{userId}/patients/{patientId}/aiTips/{aiTipId}
+     * @allow       (delete) A user deleting an old AI tip for their own patient.
+     * @deny        (list) A user trying to list tips belonging to another user.
+     * @principle   Enforces document ownership via path hierarchy.
+     */
+    match /users/{userId}/patients/{patientId}/aiTips/{aiTipId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidSubcollectionCreate(patientId);
+      allow update: if isExistingOwner(userId) && isImmutableSubcollectionFields();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for AI explanations of glucose behavior.
+     * @path        /users/{userId}/patients/{patientId}/glucoseBehaviorExplanations/{glucoseBehaviorExplanationId}
+     * @allow       (create) A user creating a new explanation record for their patient.
+     * @deny        (get) A user attempting to read another user's records.
+     * @principle   Enforces document ownership via path hierarchy.
+     */
+    match /users/{userId}/patients/{patientId}/glucoseBehaviorExplanations/{glucoseBehaviorExplanationId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidSubcollectionCreate(patientId);
+      allow update: if isExistingOwner(userId) && isImmutableSubcollectionFields();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for AI-generated solutions to common glucose issues.
+     * @path        /users/{userId}/patients/{patientId}/issueSolutions/{issueSolutionId}
+     * @allow       (get) A user reading a solution generated for their own patient.
+     * @deny        (delete) A user trying to delete a record that does not exist or that belongs to someone else.
+     * @principle   Enforces document ownership via path hierarchy.
+     */
+    match /users/{userId}/patients/{patientId}/issueSolutions/{issueSolutionId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidSubcollectionCreate(patientId);
+      allow update: if isExistingOwner(userId) && isImmutableSubcollectionFields();
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
