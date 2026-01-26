@@ -1,11 +1,28 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
 import { Dashboard } from "@/components/glyco/dashboard";
 import { Header } from "@/components/layout/header";
 import { LanguageProvider } from "@/context/language-context";
 import { TranslationProvider } from "@/context/translation-context";
+import Loading from './loading';
 
 export default function Home() {
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return <Loading />;
+  }
+
   return (
     <LanguageProvider>
       <TranslationProvider>
