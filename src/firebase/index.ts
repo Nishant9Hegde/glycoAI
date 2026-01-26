@@ -14,21 +14,18 @@ let auth: Auth;
 let firestore: Firestore;
 
 function initializeFirebase() {
-  if (firebaseConfig && firebaseConfig.apiKey && (!getApps() || !getApps().length)) {
+  if (!getApps().length) {
+    if (!firebaseConfig.apiKey) {
+      console.error("Firebase config is missing. Make sure to set up your .env file.");
+      return {} as { firebaseApp: FirebaseApp; auth: Auth; firestore: Firestore };
+    }
     firebaseApp = initializeApp(firebaseConfig);
-    auth = getAuth(firebaseApp);
-    firestore = getFirestore(firebaseApp);
-  } else if (getApps().length) {
-    firebaseApp = getApp();
-    auth = getAuth(firebaseApp);
-    firestore = getFirestore(firebaseApp);
   } else {
-    // This is a fallback, but in a real app you'd want to handle this case
-    // where config is missing.
-    console.error("Firebase config is missing.");
-    // You might throw an error or use a dummy object, depending on your needs.
-    return {} as { firebaseApp: FirebaseApp; auth: Auth; firestore: Firestore };
+    firebaseApp = getApp();
   }
+  
+  auth = getAuth(firebaseApp);
+  firestore = getFirestore(firebaseApp);
 
   return { firebaseApp, auth, firestore };
 }
