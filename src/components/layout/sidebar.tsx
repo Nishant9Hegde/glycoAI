@@ -18,7 +18,7 @@ export function Sidebar() {
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutGrid },
     { href: '/log', label: 'Log', icon: Droplet },
-    { href: '#', label: 'Calculator', icon: Calculator },
+    { href: '/calculator', label: 'Calculator', icon: Calculator },
     { href: '/ai-insights', label: 'AI Insights', icon: BrainCircuit },
   ];
 
