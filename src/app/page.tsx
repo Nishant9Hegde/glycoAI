@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { Dashboard } from "@/components/glyco/dashboard";
 import { Header } from "@/components/layout/header";
 import { LanguageProvider } from "@/context/language-context";
@@ -11,13 +12,35 @@ import Loading from './loading';
 
 export default function Home() {
   const { user, loading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.push('/login');
+      return;
     }
-  }, [user, loading, router]);
+
+    // Check if user profile is complete
+    if (firestore && user) {
+        const checkProfile = async () => {
+            try {
+                const patientDocRef = doc(firestore, `users/${user.uid}/patients/${user.uid}`);
+                const patientDoc = await getDoc(patientDocRef);
+                if (!patientDoc.exists() || !patientDoc.data()?.profileComplete) {
+                    router.push('/health-profile');
+                }
+            } catch(e) {
+                console.error("Error checking user profile", e)
+                // If there's an error, maybe the collections don't exist.
+                // Go to profile setup.
+                router.push('/health-profile');
+            }
+        };
+        checkProfile();
+    }
+  }, [user, loading, router, firestore]);
 
   if (loading || !user) {
     return <Loading />;

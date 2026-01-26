@@ -1,11 +1,10 @@
 
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUserData } from '@/context/user-data-context';
 import { getPersonalizedTips } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,9 @@ import { AIResponse } from './ai-response';
 import { type PersonalizedTipsInput, type PersonalizedTipsOutput } from '@/ai/flows/provide-personalized-tips';
 import { useTranslation } from '@/hooks/use-translation';
 import { useLanguage } from '@/context/language-context';
+import { useUser, useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { Skeleton } from '../ui/skeleton';
 
 const TipsSchema = z.object({
   unitsConsumed: z.coerce.number().min(0, 'Please enter units consumed.'),
@@ -45,12 +47,14 @@ function getLanguageName(code: string): string {
 }
 
 export function PersonalizedTipsTab() {
-  const { userData } = useUserData();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<PersonalizedTipsOutput | null>(null);
-
   const { language } = useLanguage();
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const [patientData, setPatientData] = useState<any>(null);
+  const [loadingPatientData, setLoadingPatientData] = useState(true);
 
   const { translatedText: title } = useTranslation('Personalized Tips & Suggestions');
   const { translatedText: description } = useTranslation('Provide your recent data to receive AI-generated tips for naturally maintaining your blood glucose levels.');
@@ -63,9 +67,22 @@ export function PersonalizedTipsTab() {
   const { translatedText: buttonText } = useTranslation('Generate Tips');
   const { translatedText: aiTitle } = useTranslation('Your Personalized Health Tips');
   const { translatedText: aiDescription } = useTranslation('Here are some suggestions based on your data.');
-  const { translatedText: missingInfoTitle } = useTranslation('Missing Information');
-  const { translatedText: missingInfoDesc } = useTranslation('Please complete your biodata on the left before getting tips.');
   const { translatedText: errorTitle } = useTranslation('Error');
+
+  useEffect(() => {
+    if (user && firestore) {
+      const fetchPatientData = async () => {
+        setLoadingPatientData(true);
+        const patientDocRef = doc(firestore, `users/${user.uid}/patients/${user.uid}`);
+        const patientDoc = await getDoc(patientDocRef);
+        if (patientDoc.exists()) {
+          setPatientData(patientDoc.data());
+        }
+        setLoadingPatientData(false);
+      };
+      fetchPatientData();
+    }
+  }, [user, firestore]);
 
   const form = useForm<TipsFormValues>({
     resolver: zodResolver(TipsSchema),
@@ -78,22 +95,21 @@ export function PersonalizedTipsTab() {
   });
 
   const onSubmit = (values: TipsFormValues) => {
-    if (!userData.age || !userData.weight || userData.heightFt === undefined || userData.heightIn === undefined || !userData.insulinBrand) {
+    if (!patientData) {
       toast({
         variant: 'destructive',
-        title: missingInfoTitle,
-        description: missingInfoDesc,
+        title: "Profile not loaded",
+        description: "Please wait for your profile to load before getting tips.",
       });
       return;
     }
     setAiResponse(null);
     startTransition(async () => {
-      const heightInCm = (userData.heightFt! * 30.48) + (userData.heightIn! * 2.54);
       const dataForAI: PersonalizedTipsInput = {
-        height: heightInCm,
-        weight: userData.weight!,
-        age: userData.age!,
-        insulinBrand: userData.insulinBrand,
+        height: patientData.height,
+        weight: patientData.weight,
+        age: patientData.age,
+        insulinBrand: patientData.insulinBrand,
         ...values,
         recentGlucoseLevels: values.recentGlucoseLevels.split(',').map(v => parseInt(v.trim(), 10)),
         targetLanguage: getLanguageName(language),
@@ -110,6 +126,28 @@ export function PersonalizedTipsTab() {
       }
     });
   };
+
+  if (loadingPatientData) {
+      return (
+          <Card>
+              <CardHeader>
+                  <Skeleton className="h-8 w-3/4" />
+                  <Skeleton className="h-4 w-full mt-2" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-10 w-24" />
+              </CardFooter>
+          </Card>
+      )
+  }
 
   return (
     <Card>

@@ -1,11 +1,10 @@
 
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUserData } from '@/context/user-data-context';
 import { getSolutionsForIssues } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +16,9 @@ import { AIResponse } from './ai-response';
 import { type SuggestSolutionsForIssuesInput, type SuggestSolutionsForIssuesOutput } from '@/ai/flows/suggest-solutions-for-issues';
 import { useTranslation } from '@/hooks/use-translation';
 import { useLanguage } from '@/context/language-context';
+import { useUser, useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { Skeleton } from '../ui/skeleton';
 
 const SolutionsSchema = z.object({
   issue: z.string().min(1, 'Please select an issue.'),
@@ -39,12 +41,14 @@ function getLanguageName(code: string): string {
 }
 
 export function SuggestSolutionsTab() {
-  const { userData } = useUserData();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<SuggestSolutionsForIssuesOutput | null>(null);
-
   const { language } = useLanguage();
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const [patientData, setPatientData] = useState<any>(null);
+  const [loadingPatientData, setLoadingPatientData] = useState(true);
 
   const form = useForm<SolutionsFormValues>({
     resolver: zodResolver(SolutionsSchema),
@@ -61,8 +65,6 @@ export function SuggestSolutionsTab() {
   const { translatedText: issuePlaceholder } = useTranslation('Select an issue you are facing');
   const { translatedText: buttonText } = useTranslation('Find Solutions');
   const { translatedText: aiTitle } = useTranslation('AI-Suggested Solutions');
-  const { translatedText: missingInfoTitle } = useTranslation('Missing Information');
-  const { translatedText: missingInfoDesc } = useTranslation('Please complete your biodata on the left before getting solutions.');
   const { translatedText: errorTitle } = useTranslation('Error');
   const { translatedText: explanationTitle } = useTranslation('Explanation');
   const { translatedText: solutionsTitle } = useTranslation('Solutions');
@@ -70,24 +72,37 @@ export function SuggestSolutionsTab() {
   const { translatedText: aiDescriptionPrefix } = useTranslation('For the issue:');
   const aiDescription = issue ? `${aiDescriptionPrefix} ${translatedIssue}` : '';
 
+  useEffect(() => {
+    if (user && firestore) {
+      const fetchPatientData = async () => {
+        setLoadingPatientData(true);
+        const patientDocRef = doc(firestore, `users/${user.uid}/patients/${user.uid}`);
+        const patientDoc = await getDoc(patientDocRef);
+        if (patientDoc.exists()) {
+          setPatientData(patientDoc.data());
+        }
+        setLoadingPatientData(false);
+      };
+      fetchPatientData();
+    }
+  }, [user, firestore]);
 
   const onSubmit = (values: SolutionsFormValues) => {
-    if (!userData.age || !userData.weight || userData.heightFt === undefined || userData.heightIn === undefined || !userData.insulinBrand) {
-      toast({
-        variant: 'destructive',
-        title: missingInfoTitle,
-        description: missingInfoDesc,
-      });
-      return;
+    if (!patientData) {
+        toast({
+            variant: 'destructive',
+            title: "Profile not loaded",
+            description: "Please wait for your profile to load before getting solutions.",
+        });
+        return;
     }
     setAiResponse(null);
     startTransition(async () => {
-      const heightInCm = (userData.heightFt! * 30.48) + (userData.heightIn! * 2.54);
       const dataForAI: SuggestSolutionsForIssuesInput = {
-        height: heightInCm,
-        weight: userData.weight!,
-        age: userData.age!,
-        insulinBrand: userData.insulinBrand,
+        height: patientData.height,
+        weight: patientData.weight,
+        age: patientData.age,
+        insulinBrand: patientData.insulinBrand,
         ...values,
         targetLanguage: getLanguageName(language),
       };
@@ -103,6 +118,23 @@ export function SuggestSolutionsTab() {
       }
     });
   };
+
+  if (loadingPatientData) {
+    return (
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-full mt-2" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+            </CardContent>
+            <CardFooter>
+              <Skeleton className="h-10 w-24" />
+            </CardFooter>
+        </Card>
+    )
+}
 
   return (
     <Card>

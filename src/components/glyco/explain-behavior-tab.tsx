@@ -5,7 +5,6 @@ import React, { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUserData } from '@/context/user-data-context';
 import { getBloodGlucoseExplanation } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,7 +71,6 @@ const DisplaySelectedFood = ({ value }: { value: string }) => {
 
 
 export function ExplainBehaviorTab() {
-  const { userData } = useUserData();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<ExplainBloodGlucoseBehaviorOutput | null>(null);
@@ -90,8 +88,6 @@ export function ExplainBehaviorTab() {
   const { translatedText: buttonText } = useTranslation('Get Explanation');
   const { translatedText: aiTitle } = useTranslation('AI-Generated Explanation');
   const { translatedText: aiDescription } = useTranslation('Here\'s a breakdown of the potential factors.');
-  const { translatedText: missingInfoTitle } = useTranslation('Missing Information');
-  const { translatedText: missingInfoDesc } = useTranslation('Please complete your biodata on the left before getting an explanation.');
   const { translatedText: errorTitle } = useTranslation('Error');
   const { translatedText: explanationTitle } = useTranslation('Explanation');
   const { translatedText: reasonsTitle } = useTranslation('Reasons');
@@ -113,14 +109,6 @@ export function ExplainBehaviorTab() {
   });
 
   const onSubmit = (values: ExplainBehaviorFormValues) => {
-    if (!userData.age || !userData.weight || userData.heightFt === undefined || userData.heightIn === undefined) {
-      toast({
-        variant: 'destructive',
-        title: missingInfoTitle,
-        description: missingInfoDesc,
-      });
-      return;
-    }
     setAiResponse(null);
     startTransition(async () => {
       const result = await getBloodGlucoseExplanation({
@@ -223,7 +211,7 @@ export function ExplainBehaviorTab() {
                                     food={food}
                                     currentFieldValue={field.value}
                                     onValueChange={(value) => {
-                                        field.onChange(value);
+                                        field.onChange(INDIAN_FOODS.find(f => f.label === value)?.value || value);
                                         setPopoverOpen(false);
                                     }}
                                 />

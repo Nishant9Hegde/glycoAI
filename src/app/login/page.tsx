@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore } from '@/firebase';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Droplets } from 'lucide-react';
 import Loading from '../loading';
 import { useToast } from '@/hooks/use-toast';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const signUpSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -31,6 +32,7 @@ const signInSchema = z.object({
 
 export default function LoginPage() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, loading } = useUser();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -47,14 +49,22 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (!loading && user) {
-      router.push('/');
+    if (!loading && user && firestore) {
+        startTransition(async () => {
+            const patientDocRef = doc(firestore, `users/${user.uid}/patients/${user.uid}`);
+            const patientDoc = await getDoc(patientDocRef);
+            if (patientDoc.exists() && patientDoc.data().profileComplete) {
+                router.push('/');
+            } else {
+                router.push('/health-profile');
+            }
+        });
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, firestore]);
 
 
   const handleSignUp = (values: z.infer<typeof signUpSchema>) => {
-    if (!auth) return;
+    if (!auth || !firestore) return;
 
     startTransition(async () => {
       try {
@@ -62,9 +72,17 @@ export default function LoginPage() {
         await updateProfile(userCredential.user, {
           displayName: values.name,
         });
-        // Phone number is not directly stored in auth user profile without verification.
-        // We would need to store it in Firestore. For now, we are just collecting it.
-        router.push('/');
+        
+        const patientRef = doc(firestore, `users/${userCredential.user.uid}/patients/${userCredential.user.uid}`);
+        await setDoc(patientRef, {
+            id: userCredential.user.uid,
+            name: values.name,
+            email: values.email,
+            phoneNumber: values.phoneNumber,
+            profileComplete: false,
+        });
+
+        router.push('/health-profile');
       } catch (error: any) {
         toast({
           variant: 'destructive',
@@ -76,11 +94,19 @@ export default function LoginPage() {
   };
 
   const handleSignIn = (values: z.infer<typeof signInSchema>) => {
-    if (!auth) return;
+    if (!auth || !firestore) return;
     startTransition(async () => {
       try {
-        await signInWithEmailAndPassword(auth, values.email, values.password);
-        router.push('/');
+        const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+        const loggedInUser = userCredential.user;
+        const patientDocRef = doc(firestore, `users/${loggedInUser.uid}/patients/${loggedInUser.uid}`);
+        const patientDoc = await getDoc(patientDocRef);
+
+        if (patientDoc.exists() && patientDoc.data().profileComplete) {
+            router.push('/');
+        } else {
+            router.push('/health-profile');
+        }
       } catch (error: any) {
         toast({
           variant: 'destructive',
@@ -91,7 +117,7 @@ export default function LoginPage() {
     });
   };
 
-  if (loading || (!loading && user)) {
+  if (loading || user) {
     return <Loading />;
   }
 

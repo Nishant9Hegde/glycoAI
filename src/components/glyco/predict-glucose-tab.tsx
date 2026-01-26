@@ -1,10 +1,10 @@
+
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUserData } from '@/context/user-data-context';
 import { getGlucosePrediction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,9 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { INDIAN_FOODS } from '@/lib/constants';
 import { Progress } from '../ui/progress';
+import { useUser, useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { Skeleton } from '../ui/skeleton';
 
 const PredictGlucoseSchema = z.object({
   currentGlucoseLevel: z.coerce.number().min(1, 'Please enter a valid blood glucose level.'),
@@ -71,13 +74,16 @@ const DisplaySelectedFood = ({ value }: { value: string }) => {
 
 
 export function PredictGlucoseTab() {
-  const { userData } = useUserData();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [aiResponse, setAiResponse] = useState<PredictGlucoseLevelOutput | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   
   const { language } = useLanguage();
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const [patientData, setPatientData] = useState<any>(null);
+  const [loadingPatientData, setLoadingPatientData] = useState(true);
 
   const { translatedText: title } = useTranslation('AI Glucose Prediction');
   const { translatedText: description } = useTranslation('Predict your future blood glucose levels based on your current data.');
@@ -89,8 +95,6 @@ export function PredictGlucoseTab() {
   const { translatedText: buttonText } = useTranslation('Predict Glucose');
   const { translatedText: aiTitle } = useTranslation('AI-Generated Prediction');
   const { translatedText: aiDescription } = useTranslation('Here is your predicted glucose level for the next 2 hours.');
-  const { translatedText: missingInfoTitle } = useTranslation('Missing Information');
-  const { translatedText: missingInfoDesc } = useTranslation('Please complete your biodata on the left before getting a prediction.');
   const { translatedText: errorTitle } = useTranslation('Error');
   const { translatedText: predictedLevelTitle } = useTranslation('Predicted Glucose Level');
   const { translatedText: reasoningTitle } = useTranslation('Reasoning');
@@ -99,6 +103,21 @@ export function PredictGlucoseTab() {
   const { translatedText: nothingFoundText } = useTranslation('Nothing found.');
   const { translatedText: searchFoodPlaceholder } = useTranslation('Search food...');
 
+
+  useEffect(() => {
+    if (user && firestore) {
+      const fetchPatientData = async () => {
+        setLoadingPatientData(true);
+        const patientDocRef = doc(firestore, `users/${user.uid}/patients/${user.uid}`);
+        const patientDoc = await getDoc(patientDocRef);
+        if (patientDoc.exists()) {
+          setPatientData(patientDoc.data());
+        }
+        setLoadingPatientData(false);
+      };
+      fetchPatientData();
+    }
+  }, [user, firestore]);
 
   const form = useForm<PredictGlucoseFormValues>({
     resolver: zodResolver(PredictGlucoseSchema),
@@ -112,22 +131,21 @@ export function PredictGlucoseTab() {
   });
 
   const onSubmit = (values: PredictGlucoseFormValues) => {
-    if (!userData.age || !userData.weight || userData.heightFt === undefined || userData.heightIn === undefined) {
-      toast({
-        variant: 'destructive',
-        title: missingInfoTitle,
-        description: missingInfoDesc,
-      });
-      return;
+    if (!patientData) {
+        toast({
+            variant: 'destructive',
+            title: "Profile not loaded",
+            description: "Please wait for your profile to load before getting a prediction.",
+        });
+        return;
     }
     setAiResponse(null);
     startTransition(async () => {
-      const heightInCm = (userData.heightFt! * 30.48) + (userData.heightIn! * 2.54);
       const result = await getGlucosePrediction({
         ...values,
-        height: heightInCm,
-        weight: userData.weight!,
-        age: userData.age!,
+        height: patientData.height,
+        weight: patientData.weight,
+        age: patientData.age,
         targetLanguage: getLanguageName(language),
       });
       if (result.success) {
@@ -141,6 +159,28 @@ export function PredictGlucoseTab() {
       }
     });
   };
+
+  if (loadingPatientData) {
+    return (
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-full mt-2" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <div className="grid grid-cols-2 gap-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+            </CardContent>
+            <CardFooter>
+              <Skeleton className="h-10 w-24" />
+            </CardFooter>
+        </Card>
+    )
+}
 
   return (
     <Card>
@@ -226,7 +266,7 @@ export function PredictGlucoseTab() {
                                     food={food}
                                     currentFieldValue={field.value}
                                     onValueChange={(value) => {
-                                        field.onChange(value);
+                                        field.onChange(INDIAN_FOODS.find(f => f.label === value)?.value || value);
                                         setPopoverOpen(false);
                                     }}
                                 />
