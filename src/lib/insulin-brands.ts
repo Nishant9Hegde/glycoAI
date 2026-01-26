@@ -19,6 +19,13 @@ export const INSULIN_TYPES: Record<string, string[]> = {
     'Intermediate-acting': [
         'Humulin N',
         'Novolin N',
+        'Insulatard',
+        'Insuman N',
+        'Insugen N',
+        'Wosulin N',
+        'Humstard',
+        'Gansulin N',
+        'LUPIsulin N',
     ],
     'Long-acting': [
         'Lantus',
