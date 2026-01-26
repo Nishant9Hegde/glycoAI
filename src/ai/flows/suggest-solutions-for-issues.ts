@@ -56,19 +56,20 @@ const prompt = ai.definePrompt({
   name: 'suggestSolutionsForIssuesPrompt',
   input: {schema: SuggestSolutionsForIssuesInputSchema},
   output: {schema: SuggestSolutionsForIssuesOutputSchema},
-  prompt: `You are a diabetes management expert. Based on the issue the user is experiencing, suggest some solutions. Your entire response should be in {{targetLanguage}}.
+  prompt: `You are a diabetes management expert with access to the latest medical information. A user has described a problem they are facing. Your task is to provide potential solutions and a clear explanation, tailored to their profile. Your entire response must be in {{targetLanguage}}.
 
-  Issue: {{{issue}}}
-  Insulin Brand: {{{insulinBrand}}}
-  Patient Height: {{{height}}} cm
-  Patient Weight: {{{weight}}} kg
-  Patient Age: {{{age}}} years
+User's Described Issue: {{{issue}}}
 
-  Provide a list of solutions and explain why those solutions are relevant to the issue. Focus on lifestyle adjustments and insulin dosage adjustments.
-  Format the solutions as a bulleted list.
-  
-  Solutions:
-  `
+Patient's Profile:
+- Insulin Brand(s): {{{insulinBrand}}}
+- Height: {{{height}}} cm
+- Weight: {{{weight}}} kg
+- Age: {{{age}}} years
+
+Based on the user's issue and their profile, provide a list of actionable solutions and a detailed explanation for why these solutions are relevant. The solutions should focus on practical lifestyle and insulin dosage adjustments.
+
+Format your response exactly as specified in the output schema.
+`
 });
 
 const suggestSolutionsForIssuesFlow = ai.defineFlow(

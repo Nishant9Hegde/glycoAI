@@ -10,8 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { COMMON_ISSUES } from '@/lib/constants';
+import { Input } from "@/components/ui/input";
 import { AIResponse } from './ai-response';
 import { type SuggestSolutionsForIssuesInput, type SuggestSolutionsForIssuesOutput } from '@/ai/flows/suggest-solutions-for-issues';
 import { useTranslation } from '@/hooks/use-translation';
@@ -21,15 +20,10 @@ import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
 
 const SolutionsSchema = z.object({
-  issue: z.string().min(1, 'Please select an issue.'),
+  issue: z.string().min(1, 'Please describe the issue you are facing.'),
 });
 
 type SolutionsFormValues = z.infer<typeof SolutionsSchema>;
-
-const TranslatedSelectItem = ({ item }: { item: string }) => {
-  const { translatedText } = useTranslation(item);
-  return <SelectItem value={item}>{translatedText}</SelectItem>;
-}
 
 function getLanguageName(code: string): string {
     switch (code) {
@@ -60,17 +54,16 @@ export function SuggestSolutionsTab() {
   const issue = form.watch('issue');
 
   const { translatedText: title } = useTranslation('Solutions for Common Issues');
-  const { translatedText: description } = useTranslation('Select a common diabetes-related issue to get AI-powered solutions and explanations.');
-  const { translatedText: issueLabel } = useTranslation('Common Issue');
-  const { translatedText: issuePlaceholder } = useTranslation('Select an issue you are facing');
+  const { translatedText: description } = useTranslation('Describe a diabetes-related issue to get AI-powered solutions and explanations.');
+  const { translatedText: issueLabel } = useTranslation('Describe your issue');
+  const { translatedText: issuePlaceholder } = useTranslation("e.g., 'High blood sugar in the mornings'");
   const { translatedText: buttonText } = useTranslation('Find Solutions');
   const { translatedText: aiTitle } = useTranslation('AI-Suggested Solutions');
   const { translatedText: errorTitle } = useTranslation('Error');
   const { translatedText: explanationTitle } = useTranslation('Explanation');
   const { translatedText: solutionsTitle } = useTranslation('Solutions');
-  const { translatedText: translatedIssue } = useTranslation(issue);
   const { translatedText: aiDescriptionPrefix } = useTranslation('For the issue:');
-  const aiDescription = issue ? `${aiDescriptionPrefix} ${translatedIssue}` : '';
+  const aiDescription = issue ? `${aiDescriptionPrefix} "${issue}"` : '';
 
   useEffect(() => {
     if (user && firestore) {
@@ -151,18 +144,9 @@ export function SuggestSolutionsTab() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{issueLabel}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={issuePlaceholder} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {COMMON_ISSUES.map(issue => (
-                        <TranslatedSelectItem key={issue} item={issue} />
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input placeholder={issuePlaceholder} {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

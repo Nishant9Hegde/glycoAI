@@ -1,5 +1,5 @@
 
-import { ACTIVITY_LEVELS, COMMON_ISSUES, DIETARY_HABITS, INDIAN_FOODS, MEAL_CONTEXT } from './constants';
+import { ACTIVITY_LEVELS, DIETARY_HABITS, INDIAN_FOODS, MEAL_CONTEXT } from './constants';
 
 export const stringsToTranslate = [
   // Sidebar
@@ -15,9 +15,9 @@ export const stringsToTranslate = [
 
   // from suggest-solutions-tab.tsx
   'Solutions for Common Issues',
-  'Select a common diabetes-related issue to get AI-powered solutions and explanations.',
-  'Common Issue',
-  'Select an issue you are facing',
+  'Describe a diabetes-related issue to get AI-powered solutions and explanations.',
+  'Describe your issue',
+  "e.g., 'High blood sugar in the mornings'",
   'Find Solutions',
   'AI-Suggested Solutions',
   'Please complete your biodata on the left before getting solutions.',
@@ -73,7 +73,6 @@ export const stringsToTranslate = [
   // from constants.ts
   ...ACTIVITY_LEVELS,
   ...DIETARY_HABITS,
-  ...COMMON_ISSUES,
   ...INDIAN_FOODS.map(food => food.label),
   ...MEAL_CONTEXT,
 ].filter((v, i, a) => a.indexOf(v) === i); // Ensure unique strings

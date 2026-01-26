@@ -28,15 +28,6 @@ export const DIETARY_HABITS: string[] = [
   'Paleo',
 ];
 
-export const COMMON_ISSUES: string[] = [
-  'Dawn Phenomenon (high morning blood sugar)',
-  'Nighttime Hypoglycemia (low blood sugar at night)',
-  'Post-Workout Glucose Spike',
-  'Brittle Diabetes (unpredictable highs and lows)',
-  'Gastroparesis (delayed stomach emptying)',
-  'Postprandial Hyperglycemia (high blood sugar after meals)',
-];
-
 export const INDIAN_FOODS: { value: string; label: string; carbs: number }[] = [
   { value: 'roti', label: 'Roti', carbs: 25 },
   { value: 'naan', label: 'Naan', carbs: 45 },
