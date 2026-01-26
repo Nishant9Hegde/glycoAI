@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,10 +8,13 @@ import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/fires
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { Input } from '@/components/ui/input';
-import { ArrowLeft, Activity, Calculator as CalculatorIcon } from 'lucide-react';
+import { ArrowLeft, Activity, Calculator as CalculatorIcon, ChevronsUpDown, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UtensilsCrossed } from '../icons/utensils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { INDIAN_FOODS } from '@/lib/constants';
+import { Badge } from '@/components/ui/badge';
 
 export function DoseCalculator() {
   const { user } = useUser();
@@ -29,6 +33,8 @@ export function DoseCalculator() {
   const [targetRange, setTargetRange] = useState([70, 180]);
   
   const [isLogging, setIsLogging] = useState(false);
+  const [selectedFoods, setSelectedFoods] = useState<{ label: string; carbs: number }[]>([]);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (user && firestore) {
@@ -49,6 +55,11 @@ export function DoseCalculator() {
   }, [user, firestore]);
 
   useEffect(() => {
+    const totalCarbs = selectedFoods.reduce((sum, food) => sum + food.carbs, 0);
+    setCarbs(totalCarbs);
+  }, [selectedFoods]);
+
+  useEffect(() => {
     const carbCoverage = carbRatio > 0 ? carbs / carbRatio : 0;
     
     let correctionDose = 0;
@@ -59,6 +70,18 @@ export function DoseCalculator() {
     const totalDose = carbCoverage + correctionDose;
     setRecommendedDose(Math.round(totalDose * 10) / 10); // Round to one decimal place
   }, [currentGlucose, carbs, carbRatio, correctionFactor, targetGlucose]);
+
+  const handleFoodSelect = (foodLabel: string) => {
+    const food = INDIAN_FOODS.find(f => f.label === foodLabel);
+    if (food) {
+        setSelectedFoods(prev => [...prev, { label: food.label, carbs: food.carbs }]);
+    }
+    setPopoverOpen(false);
+  };
+
+  const removeFood = (indexToRemove: number) => {
+    setSelectedFoods(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
 
   const handleLogDose = async () => {
     if (!user || !firestore || recommendedDose <= 0) return;
@@ -76,12 +99,14 @@ export function DoseCalculator() {
                 carbRatio,
                 correctionFactor,
                 targetGlucose,
+                foods: selectedFoods.map(f => f.label),
             }
         });
         toast({
             title: 'Dose Logged',
             description: `${recommendedDose} units have been logged successfully.`,
         });
+        setSelectedFoods([]);
     } catch (error: any) {
         console.error("Error logging dose:", error);
         toast({
@@ -145,26 +170,55 @@ export function DoseCalculator() {
                   <UtensilsCrossed className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold text-lg">Carbohydrates</h3>
               </div>
-              <div className="relative">
-                <Input
-                  type="number"
-                  value={carbs}
-                  onChange={(e) => setCarbs(parseInt(e.target.value, 10) || 0)}
-                  className="text-center text-2xl h-16 pr-16"
-                  placeholder="0"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">grams</span>
-              </div>
-              <div className="grid grid-cols-4 gap-2 mt-4">
-                {[15, 30, 45, 60].map((val) => (
-                  <Button
-                    key={val}
-                    variant="outline"
-                    onClick={() => setCarbs(carbs + val)}
-                  >
-                    +{val}g
-                  </Button>
-                ))}
+              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between mb-4"
+                    >
+                        Add a food item...
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                    <Command>
+                    <CommandInput placeholder="Search food..." />
+                    <CommandList>
+                        <CommandEmpty>No food found.</CommandEmpty>
+                        <CommandGroup>
+                        {INDIAN_FOODS.map((food) => (
+                            <CommandItem
+                                key={food.value}
+                                value={food.label}
+                                onSelect={() => handleFoodSelect(food.label)}
+                            >
+                                {food.label} ({food.carbs}g)
+                            </CommandItem>
+                        ))}
+                        </CommandGroup>
+                    </CommandList>
+                    </Command>
+                </PopoverContent>
+              </Popover>
+
+              <div className='space-y-2'>
+                <div className='flex justify-between items-center'>
+                    <p className='text-muted-foreground'>Total Carbs:</p>
+                    <p className='font-bold text-2xl'>{carbs}g</p>
+                </div>
+                {selectedFoods.length > 0 && (
+                    <div className='flex flex-wrap gap-2 pt-2 border-t'>
+                        {selectedFoods.map((food, index) => (
+                            <Badge key={`${food.label}-${index}`} variant="secondary" className='flex items-center gap-1'>
+                                {food.label} ({food.carbs}g)
+                                <button onClick={() => removeFood(index)} className='ml-1 rounded-full hover:bg-muted-foreground/20'>
+                                    <X className='h-3 w-3' />
+                                </button>
+                            </Badge>
+                        ))}
+                    </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -184,12 +238,12 @@ export function DoseCalculator() {
             <div className="space-y-2 text-sm border-t pt-4">
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Carb coverage ({carbs}g ÷ {carbRatio})</span>
-                    <span className="font-medium">+{(carbs / carbRatio).toFixed(1)} u</span>
+                    <span className="font-medium">+{(carbRatio > 0 ? carbs / carbRatio : 0).toFixed(1)} u</span>
                 </div>
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Correction ({currentGlucose} → {targetGlucose})</span>
                     <span className="font-medium">
-                        +{Math.max(0, (currentGlucose - targetGlucose) / correctionFactor).toFixed(1)} u
+                        +{Math.max(0, (correctionFactor > 0 ? (currentGlucose - targetGlucose) / correctionFactor : 0)).toFixed(1)} u
                     </span>
                 </div>
             </div>
