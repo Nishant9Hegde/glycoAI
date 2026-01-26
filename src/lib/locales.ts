@@ -9,7 +9,6 @@ export const stringsToTranslate = [
   'Settings',
 
   // from ai-features.tsx
-  'Personalized Tips',
   'Explain Behavior',
   'Suggest Solutions',
   'AI Prediction',
@@ -34,20 +33,6 @@ export const stringsToTranslate = [
   'Select food...',
   'Search food...',
   'Nothing found.',
-
-  // from personalized-tips-tab.tsx
-  'Personalized Tips & Suggestions',
-  'Provide your recent data to receive AI-generated tips for naturally maintaining your blood glucose levels.',
-  'Total Insulin Units (Last 24h)',
-  'Recent Glucose Levels (mg/dL)',
-  'Activity Level',
-  'Dietary Habits',
-  'Select activity level',
-  'Select dietary habit',
-  'Generate Tips',
-  'Your Personalized Health Tips',
-  'Here are some suggestions based on your data.',
-  'Please complete your biodata on the left before getting tips.',
 
   // from suggest-solutions-tab.tsx
   'Solutions for Common Issues',
