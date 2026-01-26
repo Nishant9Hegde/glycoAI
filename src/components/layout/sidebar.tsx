@@ -58,7 +58,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="mt-auto p-4">
-        <NavLink href="#" label="Settings" icon={Settings} />
+        <NavLink href="/health-profile" label="Settings" icon={Settings} />
       </div>
     </aside>
   );
