@@ -6,33 +6,12 @@ export const stringsToTranslate = [
   'Dashboard',
   'Log',
   'Calculator',
+  'AI Insights',
   'Settings',
 
   // from ai-features.tsx
-  'Explain Behavior',
   'Suggest Solutions',
   'AI Prediction',
-
-  // from explain-behavior-tab.tsx
-  'Explain Unusual Behavior',
-  'Get AI-powered explanations for unexpected blood glucose readings based on your recent activity and intake.',
-  'Blood Glucose (mg/dL)',
-  'Insulin Units Consumed',
-  'Activity Performed',
-  'Food Intake',
-  'Other Factors (Optional)',
-  'Get Explanation',
-  'AI-Generated Explanation',
-  'Here\'s a breakdown of the potential factors.',
-  'Missing Information',
-  'Please complete your biodata on the left before getting an explanation.',
-  'Error',
-  'Explanation',
-  'Reasons',
-  'Suggestions',
-  'Select food...',
-  'Search food...',
-  'Nothing found.',
 
   // from suggest-solutions-tab.tsx
   'Solutions for Common Issues',
@@ -42,6 +21,8 @@ export const stringsToTranslate = [
   'Find Solutions',
   'AI-Suggested Solutions',
   'Please complete your biodata on the left before getting solutions.',
+  'Error',
+  'Explanation',
   'Solutions',
   'For the issue:',
 
@@ -57,7 +38,6 @@ export const stringsToTranslate = [
 
   // from header.tsx
   'My Account',
-  'Settings',
   'Support',
   'Logout',
 
@@ -65,6 +45,9 @@ export const stringsToTranslate = [
   'AI Glucose Prediction',
   'Predict your future blood glucose levels based on your current data.',
   'Current Glucose (mg/dL)',
+  'Insulin Units Consumed',
+  'Activity Performed',
+  'Food Intake',
   'Time Since Last Meal (hours)',
   'Predict Glucose',
   'AI-Generated Prediction',
@@ -73,6 +56,9 @@ export const stringsToTranslate = [
   'Predicted Glucose Level',
   'Reasoning',
   'Confidence Score',
+  'Select food...',
+  'Search food...',
+  'Nothing found.',
 
   // from log-glucose-form.tsx
   'Log Glucose',
