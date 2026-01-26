@@ -8,7 +8,7 @@ import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/fires
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, Activity, Calculator as CalculatorIcon, ChevronsUpDown, X } from 'lucide-react';
+import { ArrowLeft, Droplet, Calculator as CalculatorIcon, ChevronsUpDown, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UtensilsCrossed } from '../icons/utensils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -139,7 +139,7 @@ export function DoseCalculator() {
           <Card>
             <CardContent className="p-6">
               <div className='flex items-center gap-2 mb-4'>
-                <Activity className="h-5 w-5 text-primary" />
+                <Droplet className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-lg">Current Blood Glucose</h3>
               </div>
               <div className="text-center">

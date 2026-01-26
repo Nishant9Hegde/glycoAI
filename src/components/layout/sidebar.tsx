@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Activity,
+  GaugeCircle,
   LayoutGrid,
   Droplet,
   Calculator,
@@ -47,7 +47,7 @@ export function Sidebar() {
       <div className="flex h-24 items-center justify-center">
         <Link href="/">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-            <Activity className="h-9 w-9" />
+            <GaugeCircle className="h-9 w-9" />
             <span className="sr-only">InsuTech</span>
           </div>
         </Link>
