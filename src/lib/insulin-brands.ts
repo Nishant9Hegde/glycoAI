@@ -11,6 +11,10 @@ export const INSULIN_TYPES: Record<string, string[]> = {
         'Humulin R',
         'Novolin R',
         'Velosulin BR',
+        'Actrapid',
+        'Huminsulin R',
+        'Insugen R',
+        'LUPIsulin'
     ],
     'Intermediate-acting': [
         'Humulin N',
