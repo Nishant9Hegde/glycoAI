@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { StepIndicator } from '@/components/health-profile/step-indicator';
 import { Step1 } from '@/components/health-profile/step-1';
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Droplets } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
 import Loading from '../loading';
-import { setDoc, doc } from 'firebase/firestore';
+import { setDoc, doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 export type HealthProfileData = {
@@ -45,6 +45,27 @@ export default function HealthProfilePage() {
     glucoseDataFile: null,
     targetRange: [80, 140],
   });
+
+  useEffect(() => {
+    if (loading) {
+      return; // Wait for the auth state to be determined
+    }
+    if (!user) {
+      router.push('/login'); // Not logged in, redirect
+      return;
+    }
+    if (firestore) {
+      // Logged in, check if profile is already complete
+      const checkProfile = async () => {
+        const patientDocRef = doc(firestore, `users/${user.uid}/patients/${user.uid}`);
+        const patientDoc = await getDoc(patientDocRef);
+        if (patientDoc.exists() && patientDoc.data()?.profileComplete) {
+          router.push('/'); // If complete, go to dashboard
+        }
+      };
+      checkProfile();
+    }
+  }, [user, loading, firestore, router]);
 
   const nextStep = () => setCurrentStep(prev => (prev < 4 ? prev + 1 : prev));
   const prevStep = () => setCurrentStep(prev => (prev > 1 ? prev - 1 : prev));
@@ -104,12 +125,7 @@ export default function HealthProfilePage() {
     }
   };
 
-  if (loading) {
-    return <Loading />;
-  }
-
-  if (!user) {
-    router.push('/login');
+  if (loading || !user) {
     return <Loading />;
   }
 
