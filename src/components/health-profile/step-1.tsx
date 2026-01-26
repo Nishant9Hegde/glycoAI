@@ -45,6 +45,31 @@ export function Step1({ formData, updateFormData }: Step1Props) {
                     <Input id="heightIn" name="heightIn" type="number" placeholder="e.g., 9" value={formData.heightIn} onChange={handleInputChange} />
                 </div>
             </div>
+             <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !formData.dateOfBirth && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {formData.dateOfBirth ? format(formData.dateOfBirth, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={formData.dateOfBirth}
+                            onSelect={(date) => updateFormData({ dateOfBirth: date || new Date() })}
+                            initialFocus
+                        />
+                    </PopoverContent>
+                </Popover>
+            </div>
             <div className="space-y-2">
                 <Label htmlFor="dateOfDiagnosis">Date of Diagnosis</Label>
                 <Popover>

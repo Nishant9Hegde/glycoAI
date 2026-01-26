@@ -20,6 +20,7 @@ export type HealthProfileData = {
   weight: string;
   heightFt: string;
   heightIn: string;
+  dateOfBirth: Date;
   dateOfDiagnosis: Date;
   insulinType: string;
   insulinBrand: string;
@@ -39,6 +40,7 @@ export default function HealthProfilePage() {
     weight: '',
     heightFt: '',
     heightIn: '',
+    dateOfBirth: new Date(),
     dateOfDiagnosis: new Date(),
     insulinType: '',
     insulinBrand: '',
@@ -79,6 +81,7 @@ export default function HealthProfilePage() {
           age: parseInt(formData.age),
           weight: parseInt(formData.weight),
           height: heightInCm,
+          dateOfBirth: formData.dateOfBirth.toISOString().split('T')[0],
           dateOfDiagnosis: formData.dateOfDiagnosis.toISOString().split('T')[0],
           insulinType: formData.insulinType,
           insulinBrand: formData.insulinBrand,
