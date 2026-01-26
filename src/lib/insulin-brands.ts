@@ -1,11 +1,10 @@
 export const INSULIN_TYPES: Record<string, string[]> = {
     'Rapid-acting': [
-        'Apidra',
+        'NovoRapid',
         'Fiasp',
         'Humalog',
-        'Novolog',
+        'Apidra',
         'Lyumjev',
-        'Admelog',
     ],
     'Short-acting': [
         'Humulin R',
