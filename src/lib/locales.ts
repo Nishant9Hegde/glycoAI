@@ -9,23 +9,6 @@ export const stringsToTranslate = [
   'AI Insights',
   'Settings',
 
-  // from ai-features.tsx
-  'Suggest Solutions',
-  'AI Prediction',
-
-  // from suggest-solutions-tab.tsx
-  'Solutions for Common Issues',
-  'Describe a diabetes-related issue to get AI-powered solutions and explanations.',
-  'Describe your issue',
-  "e.g., 'High blood sugar in the mornings'",
-  'Find Solutions',
-  'AI-Suggested Solutions',
-  'Please complete your biodata on the left before getting solutions.',
-  'Error',
-  'Explanation',
-  'Solutions',
-  'For the issue:',
-
   // from user-data-form.tsx
   'Your Health Profile',
   'Tell us a bit about you to unlock personalized AI insights for your health journey. This data stays on your device.',
@@ -40,25 +23,6 @@ export const stringsToTranslate = [
   'My Account',
   'Support',
   'Logout',
-
-  // from predict-glucose-tab.tsx
-  'AI Glucose Prediction',
-  'Predict your future blood glucose levels based on your current data.',
-  'Current Glucose (mg/dL)',
-  'Insulin Units Consumed',
-  'Activity Performed',
-  'Food Intake',
-  'Time Since Last Meal (hours)',
-  'Predict Glucose',
-  'AI-Generated Prediction',
-  'Here is your predicted glucose level for the next 2 hours.',
-  'Please complete your biodata on the left before getting a prediction.',
-  'Predicted Glucose Level',
-  'Reasoning',
-  'Confidence Score',
-  'Select food...',
-  'Search food...',
-  'Nothing found.',
 
   // from log-glucose-form.tsx
   'Log Glucose',
