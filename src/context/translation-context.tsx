@@ -53,23 +53,44 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
     setIsLoading(true);
     try {
       const chunkSize = 10;
+      const MAX_RETRIES = 3;
+      const RETRY_DELAY_MS = 1000;
       let allTranslatedTexts: string[] = [];
       
       for (let i = 0; i < stringsToTranslate.length; i += chunkSize) {
         const chunk = stringsToTranslate.slice(i, i + chunkSize);
-        const result = await getTranslation({
-          texts: chunk,
-          targetLanguage: getLanguageName(lang),
-        });
+        
+        let chunkSuccess = false;
+        let retries = 0;
+        let result;
 
-        if (result.success && result.data.translatedTexts.length === chunk.length) {
-          allTranslatedTexts.push(...result.data.translatedTexts);
-        } else {
-          console.error('Translation chunk failed or mismatch in length', result.error);
-          allTranslatedTexts.push(...chunk); // Fallback to original text for the failed chunk
+        while (!chunkSuccess && retries < MAX_RETRIES) {
+            result = await getTranslation({
+              texts: chunk,
+              targetLanguage: getLanguageName(lang),
+            });
+
+            if (result.success && result.data.translatedTexts.length === chunk.length) {
+              allTranslatedTexts.push(...result.data.translatedTexts);
+              chunkSuccess = true;
+            } else {
+              retries++;
+              console.error(`Translation chunk failed (attempt ${retries}/${MAX_RETRIES})`, result.error);
+              if (retries < MAX_RETRIES) {
+                // Exponential backoff: 1s, 2s, 4s
+                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * Math.pow(2, retries - 1)));
+              }
+            }
         }
+
+        if (!chunkSuccess) {
+            console.error('Translation chunk failed after all retries. Falling back to original text for this chunk.', result?.error);
+            allTranslatedTexts.push(...chunk);
+        }
+
         if (stringsToTranslate.length > chunkSize) {
-            await new Promise(resolve => setTimeout(resolve, 200));
+            // Increased delay between chunks to be safer
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
 
@@ -81,7 +102,7 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
         translationCache.set(lang, newTranslations);
         setTranslations(newTranslations);
       } else {
-        console.error('Final translated texts length does not match original length');
+        console.error('Final translated texts length does not match original length. Falling back to no translations.');
         setTranslations(identityMap);
       }
     } catch (error) {
