@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,14 +14,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Droplet } from 'lucide-react';
-import { MEAL_CONTEXT, MEAL_TIMINGS } from '@/lib/constants';
+import { MEAL_CONTEXT } from '@/lib/constants';
 import { useTranslation } from '@/hooks/use-translation';
 
 // Schema for form validation
 const LogGlucoseSchema = z.object({
   glucoseLevel: z.coerce.number().min(1, 'Glucose level is required.'),
   mealContext: z.string().min(1, 'Meal context is required.'),
-  mealTiming: z.string().min(1, 'Meal timing is required.'),
+  mealTiming: z.string().min(1, 'Time is required.'),
 });
 
 type LogGlucoseFormValues = z.infer<typeof LogGlucoseSchema>;
@@ -43,9 +43,18 @@ export function LogGlucoseForm() {
     defaultValues: {
       glucoseLevel: 120,
       mealContext: 'Other',
-      mealTiming: 'Snack'
+      mealTiming: ''
     },
   });
+  
+  useEffect(() => {
+    // Set the current time as the default value for the time input.
+    // This runs only on the client, after hydration, to avoid mismatches.
+    const now = new Date();
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    form.setValue('mealTiming', currentTime);
+  }, [form]);
+
 
   const onSubmit = (values: LogGlucoseFormValues) => {
     if (!user || !firestore) {
@@ -89,10 +98,9 @@ export function LogGlucoseForm() {
   const { translatedText: backButton } = useTranslation('Back');
   const { translatedText: glucoseLevelLabel } = useTranslation('Blood Glucose Level');
   const { translatedText: mealContextLabel } = useTranslation('Meal Context');
-  const { translatedText: mealTimingLabel } = useTranslation('Meal Timing');
+  const { translatedText: timeLabel } = useTranslation('Time');
   const { translatedText: logReadingButton } = useTranslation('Log Reading');
   const { translatedText: selectMealContextPlaceholder } = useTranslation('Select meal context');
-  const { translatedText: selectMealTimingPlaceholder } = useTranslation('Select meal timing');
 
   return (
     <div className="w-full max-w-lg">
@@ -136,19 +144,10 @@ export function LogGlucoseForm() {
                 name="mealTiming"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{mealTimingLabel}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={selectMealTimingPlaceholder} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {MEAL_TIMINGS.map(timing => (
-                          <TranslatedSelectItem key={timing} item={timing} />
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>{timeLabel}</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

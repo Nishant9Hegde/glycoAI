@@ -258,7 +258,7 @@
         },
         "mealTiming": {
           "type": "string",
-          "description": "The timing of the meal (e.g., Breakfast, Lunch)."
+          "description": "The time the reading was logged."
         },
         "timestamp": {
           "type": "string",

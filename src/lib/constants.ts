@@ -68,10 +68,3 @@ export const MEAL_CONTEXT = [
     'Bedtime',
     'Other'
 ];
-
-export const MEAL_TIMINGS = [
-    'Breakfast',
-    'Lunch',
-    'Dinner',
-    'Snack'
-];
