@@ -52,58 +52,39 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
 
     setIsLoading(true);
     try {
-      const chunkSize = 10;
       const MAX_RETRIES = 3;
-      const RETRY_DELAY_MS = 1000;
-      let allTranslatedTexts: string[] = [];
+      const RETRY_DELAY_MS = 2000;
       
-      for (let i = 0; i < stringsToTranslate.length; i += chunkSize) {
-        const chunk = stringsToTranslate.slice(i, i + chunkSize);
-        
-        let chunkSuccess = false;
-        let retries = 0;
-        let result;
+      let success = false;
+      let retries = 0;
+      let result;
 
-        while (!chunkSuccess && retries < MAX_RETRIES) {
-            result = await getTranslation({
-              texts: chunk,
-              targetLanguage: getLanguageName(lang),
-            });
+      while (!success && retries < MAX_RETRIES) {
+          result = await getTranslation({
+            texts: stringsToTranslate,
+            targetLanguage: getLanguageName(lang),
+          });
 
-            if (result.success && result.data.translatedTexts.length === chunk.length) {
-              allTranslatedTexts.push(...result.data.translatedTexts);
-              chunkSuccess = true;
-            } else {
-              retries++;
-              console.error(`Translation chunk failed (attempt ${retries}/${MAX_RETRIES})`, result.error);
-              if (retries < MAX_RETRIES) {
-                // Exponential backoff: 1s, 2s, 4s
-                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * Math.pow(2, retries - 1)));
-              }
+          if (result.success && result.data.translatedTexts.length === stringsToTranslate.length) {
+            const newTranslations = stringsToTranslate.reduce((acc, originalText, index) => {
+              acc[originalText] = result.data.translatedTexts[index];
+              return acc;
+            }, {} as TranslationDict);
+            translationCache.set(lang, newTranslations);
+            setTranslations(newTranslations);
+            success = true;
+          } else {
+            retries++;
+            console.error(`Translation failed (attempt ${retries}/${MAX_RETRIES})`, result.error);
+            if (retries < MAX_RETRIES) {
+              await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * Math.pow(2, retries - 1)));
             }
-        }
-
-        if (!chunkSuccess) {
-            console.error('Translation chunk failed after all retries. Falling back to original text for this chunk.', result?.error);
-            allTranslatedTexts.push(...chunk);
-        }
-
-        if (stringsToTranslate.length > chunkSize) {
-            // Increased delay between chunks to be safer
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
+          }
       }
 
-      if (allTranslatedTexts.length === stringsToTranslate.length) {
-        const newTranslations = stringsToTranslate.reduce((acc, originalText, index) => {
-          acc[originalText] = allTranslatedTexts[index];
-          return acc;
-        }, {} as TranslationDict);
-        translationCache.set(lang, newTranslations);
-        setTranslations(newTranslations);
-      } else {
-        console.error('Final translated texts length does not match original length. Falling back to no translations.');
-        setTranslations(identityMap);
+      if (!success) {
+          console.error('Translation failed after all retries. Falling back to original text.', result?.error);
+          setTranslations(identityMap);
       }
     } catch (error) {
       console.error('Failed to fetch translations', error);
