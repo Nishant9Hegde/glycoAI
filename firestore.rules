@@ -185,5 +185,19 @@ service cloud.firestore {
       allow update: if isExistingOwner(userId) && isImmutableSubcollectionFields();
       allow delete: if isExistingOwner(userId);
     }
+
+    /**
+     * @description Rules for a patient's glucose log entries.
+     * @path        /users/{userId}/patients/{patientId}/glucoseLogs/{glucoseLogId}
+     * @allow       (list) A user listing their own glucose logs for one of their patients.
+     * @deny        (create) A user trying to create a log entry under another user's patient.
+     * @principle   Enforces document ownership via path hierarchy.
+     */
+    match /users/{userId}/patients/{patientId}/glucoseLogs/{glucoseLogId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidSubcollectionCreate(patientId);
+      allow update: if isExistingOwner(userId) && isImmutableSubcollectionFields();
+      allow delete: if isExistingOwner(userId);
+    }
   }
 }

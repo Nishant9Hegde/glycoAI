@@ -60,3 +60,18 @@ export const INDIAN_FOODS: { value: string, label: string }[] = [
     { value: 'upma', label: 'Upma' },
     { value: 'poha', label: 'Poha' },
 ];
+
+export const MEAL_CONTEXT = [
+    'Before Meal',
+    'After Meal',
+    'Fasting',
+    'Bedtime',
+    'Other'
+];
+
+export const MEAL_TIMINGS = [
+    'Breakfast',
+    'Lunch',
+    'Dinner',
+    'Snack'
+];

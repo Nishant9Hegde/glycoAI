@@ -232,6 +232,47 @@
         "solutionText",
         "timestamp"
       ]
+    },
+    "GlucoseLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GlucoseLog",
+      "type": "object",
+      "description": "Represents a single blood glucose reading logged by the user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the glucose log.",
+          "format": "uuid"
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to Patient."
+        },
+        "glucoseLevel": {
+          "type": "number",
+          "description": "The recorded blood glucose level in mg/dL."
+        },
+        "mealContext": {
+          "type": "string",
+          "description": "Context of the meal when the reading was taken."
+        },
+        "mealTiming": {
+          "type": "string",
+          "description": "The timing of the meal (e.g., Breakfast, Lunch)."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the reading was logged.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "patientId",
+        "glucoseLevel",
+        "mealContext",
+        "mealTiming",
+        "timestamp"
+      ]
     }
   },
   "auth": {
@@ -377,6 +418,30 @@
             {
               "name": "issueSolutionId",
               "description": "The ID of the issue solution."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/patients/{patientId}/glucoseLogs/{glucoseLogId}",
+        "definition": {
+          "entityName": "GlucoseLog",
+          "schema": {
+            "$ref": "#/backend/entities/GlucoseLog"
+          },
+          "description": "Stores glucose log entries for a specific patient, owned by the user with ID '{userId}'.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the patient data."
+            },
+            {
+              "name": "patientId",
+              "description": "The ID of the patient."
+            },
+            {
+              "name": "glucoseLogId",
+              "description": "The ID of the glucose log entry."
             }
           ]
         }

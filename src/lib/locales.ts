@@ -1,5 +1,5 @@
 
-import { ACTIVITY_LEVELS, COMMON_ISSUES, DIETARY_HABITS, INDIAN_FOODS } from './constants';
+import { ACTIVITY_LEVELS, COMMON_ISSUES, DIETARY_HABITS, INDIAN_FOODS, MEAL_CONTEXT, MEAL_TIMINGS } from './constants';
 
 export const stringsToTranslate = [
   // Sidebar
@@ -89,9 +89,22 @@ export const stringsToTranslate = [
   'Reasoning',
   'Confidence Score',
 
+  // from log-glucose-form.tsx
+  'Log Glucose',
+  'Record your blood glucose reading',
+  'Back',
+  'Blood Glucose Level',
+  'Meal Context',
+  'Meal Timing',
+  'Log Reading',
+  'Select meal context',
+  'Select meal timing',
+
   // from constants.ts
   ...ACTIVITY_LEVELS,
   ...DIETARY_HABITS,
   ...COMMON_ISSUES,
   ...INDIAN_FOODS.map(food => food.label),
+  ...MEAL_CONTEXT,
+  ...MEAL_TIMINGS,
 ].filter((v, i, a) => a.indexOf(v) === i); // Ensure unique strings

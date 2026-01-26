@@ -17,7 +17,7 @@ import { useTranslation } from '@/hooks/use-translation';
 export function Sidebar() {
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutGrid },
-    { href: '#', label: 'Log', icon: Droplet },
+    { href: '/log', label: 'Log', icon: Droplet },
     { href: '#', label: 'Calculator', icon: Calculator },
     { href: '/ai-insights', label: 'AI Insights', icon: BrainCircuit },
   ];
