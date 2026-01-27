@@ -35,6 +35,7 @@ export type HealthProfileData = {
   glucoseDataFile: File | null;
   glucoseDataImageUrl: string;
   targetRange: [number, number];
+  totalDailyDose: string;
 };
 
 export default function HealthProfilePage() {
@@ -57,6 +58,7 @@ export default function HealthProfilePage() {
     glucoseDataFile: null,
     glucoseDataImageUrl: '',
     targetRange: [80, 140],
+    totalDailyDose: '',
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -89,6 +91,7 @@ export default function HealthProfilePage() {
             glucoseDataFile: null,
             glucoseDataImageUrl: data.glucoseDataImageUrl || '',
             targetRange: [data.targetGlucoseMin || 80, data.targetGlucoseMax || 140],
+            totalDailyDose: data.totalDailyDose?.toString() || '',
           });
           if(data.glucoseDataImageUrl) {
             setImagePreview(data.glucoseDataImageUrl);
@@ -170,6 +173,7 @@ export default function HealthProfilePage() {
           glucoseDataImageUrl,
           targetGlucoseMin: formData.targetRange[0],
           targetGlucoseMax: formData.targetRange[1],
+          totalDailyDose: parseInt(formData.totalDailyDose),
         },
         { merge: true }
       );
@@ -308,7 +312,11 @@ export default function HealthProfilePage() {
                             <CardTitle>Insulin Details</CardTitle>
                             <CardDescription>Select the types and brands of insulin you use.</CardDescription>
                         </CardHeader>
-                        <CardContent className="pt-6">
+                        <CardContent className="space-y-6 pt-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="totalDailyDose">Total Daily Dose (Units)</Label>
+                                <Input id="totalDailyDose" name="totalDailyDose" type="number" placeholder="e.g., 40" value={formData.totalDailyDose} onChange={(e) => updateFormData({ totalDailyDose: e.target.value })} />
+                            </div>
                             <Accordion type="multiple" className="w-full" defaultValue={openAccordionItems}>
                                 {Object.entries(INSULIN_TYPES).map(([type, brands]) => (
                                 <AccordionItem value={type} key={type}>

@@ -23,6 +23,10 @@
           "type": "number",
           "description": "Age of the patient in years."
         },
+        "totalDailyDose": {
+          "type": "number",
+          "description": "Total daily dose of insulin in units."
+        },
         "insulinSelections": {
           "type": "array",
           "description": "Insulin selections, including brand and type.",
