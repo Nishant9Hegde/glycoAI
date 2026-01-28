@@ -8,6 +8,8 @@ export const stringsToTranslate = [
   'Calculator',
   'AI Insights',
   'Settings',
+  'Profile',
+  'CGM Integration',
 
   // from user-data-form.tsx
   'Your Health Profile',

@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "dexcom-logo",
+      "description": "Dexcom CGM provider logo",
+      "imageUrl": "https://images.unsplash.com/photo-1707960119803-3b2880e847b4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxsb2dvJTIwYnJhbmR8ZW58MHx8fHwxNzY5NTE2ODUwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "logo brand"
+    },
+    {
+      "id": "libre-logo",
+      "description": "Freestyle Libre CGM provider logo",
+      "imageUrl": "https://images.unsplash.com/photo-1764229119403-42059dac36a4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxsb2dvJTIwYnJhbmR8ZW58MHx8fHwxNzY5NTE2ODUwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "logo brand"
+    }
+  ]
 }
