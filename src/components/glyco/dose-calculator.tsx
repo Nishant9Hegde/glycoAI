@@ -96,7 +96,7 @@ export function DoseCalculator() {
 
       setCalculating(true);
       try {
-        const response = await fetch('http://localhost:5000/api/scenario2', {
+        const response = await fetch('https://unsignalised-idella-devotionally.ngrok-free.dev/api/scenario2', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

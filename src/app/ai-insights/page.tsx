@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Sparkles, Clock, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { SuggestSolutionsTab } from '@/components/glyco/suggest-solutions-tab';
@@ -39,37 +41,50 @@ const PredictionCard = ({ time, value, confidence }: { time: string; value?: num
 export default function AiInsightsPage() {
   const router = useRouter();
   const [predictionData, setPredictionData] = useState<PredictionData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // User inputs
+  const [currentBG, setCurrentBG] = useState(120);
+  const [recentInsulin, setRecentInsulin] = useState(5);
+  const [recentCarbs, setRecentCarbs] = useState(45);
+  const [timeOfDay, setTimeOfDay] = useState('12:00');
 
-  useEffect(() => {
-    // Fetch scenario 1 predictions when page loads
-    const fetchPredictions = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('http://localhost:5000/api/scenario1');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch predictions');
-        }
-
-        const data = await response.json();
-        
-        if (data.success) {
-          setPredictionData(data);
-        } else {
-          setError(data.error || 'Unknown error occurred');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load predictions');
-        console.error('Prediction error:', err);
-      } finally {
-        setLoading(false);
+  const fetchPredictions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('https://unsignalised-idella-devotionally.ngrok-free.dev/api/scenario1', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          current_bg: currentBG,
+          recent_insulin: recentInsulin,
+          recent_carbs: recentCarbs,
+          time_of_day: timeOfDay,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch predictions');
       }
-    };
 
-    fetchPredictions();
-  }, []);
+      const data = await response.json();
+      
+      if (data.success) {
+        setPredictionData(data);
+      } else {
+        setError(data.error || 'Unknown error occurred');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load predictions');
+      console.error('Prediction error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen w-full">
@@ -92,6 +107,63 @@ export default function AiInsightsPage() {
               </Button>
             </div>
 
+            {/* Input Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Enter Current Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="timeOfDay">Time of Day</Label>
+                    <Input
+                      id="timeOfDay"
+                      type="time"
+                      value={timeOfDay}
+                      onChange={(e) => setTimeOfDay(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="currentBG">Current BG (mg/dL)</Label>
+                    <Input
+                      id="currentBG"
+                      type="number"
+                      value={currentBG}
+                      onChange={(e) => setCurrentBG(Number(e.target.value))}
+                      min={40}
+                      max={400}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="recentInsulin">Recent Insulin (units, last 3h)</Label>
+                    <Input
+                      id="recentInsulin"
+                      type="number"
+                      value={recentInsulin}
+                      onChange={(e) => setRecentInsulin(Number(e.target.value))}
+                      min={0}
+                      max={50}
+                      step={0.5}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="recentCarbs">Recent Carbs (grams, last 3h)</Label>
+                    <Input
+                      id="recentCarbs"
+                      type="number"
+                      value={recentCarbs}
+                      onChange={(e) => setRecentCarbs(Number(e.target.value))}
+                      min={0}
+                      max={200}
+                    />
+                  </div>
+                </div>
+                <Button onClick={fetchPredictions} disabled={loading} className="w-full">
+                  {loading ? 'Predicting...' : 'Predict Next 3 Hours'}
+                </Button>
+              </CardContent>
+            </Card>
+
             {error && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
@@ -112,36 +184,6 @@ export default function AiInsightsPage() {
                   <AlertDescription>{predictionData.alert.details}</AlertDescription>
                 )}
               </Alert>
-            )}
-
-            {predictionData && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-muted-foreground" />
-                    Current Status
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Current BG</p>
-                      <p className="text-2xl font-bold">{predictionData.current_bg.toFixed(0)}</p>
-                      <p className="text-xs text-muted-foreground">mg/dL</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Recent Insulin</p>
-                      <p className="text-2xl font-bold">{predictionData.recent_insulin.toFixed(1)}</p>
-                      <p className="text-xs text-muted-foreground">units (3h)</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Recent Carbs</p>
-                      <p className="text-2xl font-bold">{predictionData.recent_carbs.toFixed(0)}</p>
-                      <p className="text-xs text-muted-foreground">grams (3h)</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             )}
 
             <SuggestSolutionsTab />
