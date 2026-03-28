@@ -12,6 +12,7 @@ import {
   User,
   Cable,
   ChevronDown,
+  ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-translation';
@@ -26,6 +27,7 @@ export function Sidebar() {
     { href: '/log', label: 'Log', icon: Droplet },
     { href: '/calculator', label: 'Calculator', icon: Calculator },
     { href: '/ai-insights', label: 'AI Insights', icon: BrainCircuit },
+    { href: '/doctor-instructions', label: 'Doctor Instructions', icon: ClipboardList },
   ];
 
   const NavLink = ({ href, label, icon: Icon }: { href: string, label: string, icon: React.ElementType }) => {

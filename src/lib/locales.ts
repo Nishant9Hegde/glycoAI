@@ -1,4 +1,3 @@
-
 import { ACTIVITY_LEVELS, DIETARY_HABITS, INDIAN_FOODS, MEAL_CONTEXT } from './constants';
 
 export const stringsToTranslate = [
@@ -7,6 +6,7 @@ export const stringsToTranslate = [
   'Log',
   'Calculator',
   'AI Insights',
+  'Doctor Instructions',
   'Settings',
   'Profile',
   'CGM Integration',

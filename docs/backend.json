@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Patient": {
@@ -23,9 +24,17 @@
           "type": "number",
           "description": "Age of the patient in years."
         },
-        "totalDailyDose": {
+        "hba1c": {
           "type": "number",
-          "description": "Total daily dose of insulin in units."
+          "description": "Most recent HbA1c level of the patient in percent."
+        },
+        "basalDose": {
+          "type": "number",
+          "description": "Total daily basal dose of insulin in units."
+        },
+        "bolusDose": {
+          "type": "number",
+          "description": "Total daily bolus dose of insulin in units."
         },
         "insulinSelections": {
           "type": "array",

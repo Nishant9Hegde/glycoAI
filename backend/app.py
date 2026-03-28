@@ -190,16 +190,110 @@ def calculate_insulin_recommendation(current_bg_readings, recent_insulin, recent
     }
 
 
-@app.route('/api/scenario1', methods=['GET'])
+@app.route('/api/scenario1', methods=['POST'])
 def scenario1():
     """
     SCENARIO 1: Post-meal prediction using P03 dataset
+    Finds matching entry based on current BG, recent insulin, and recent carbs
     """
     try:
-        # Use P03 data sample
-        start_idx = 500
-        end_idx = start_idx + LOOK_BACK
-
+        data = request.get_json()
+        target_bg = data.get('current_bg', 120)
+        target_insulin = data.get('recent_insulin', 0)
+        target_carbs = data.get('recent_carbs', 0)
+        time_of_day = data.get('time_of_day', '12:00')
+        
+        # Manual rule-based checks
+        hour = int(time_of_day.split(':')[0])
+        is_nighttime = hour >= 22 or hour <= 6  # 10 PM to 6 AM
+        
+        # Rule 1: Nighttime hypoglycemia risk
+        if is_nighttime and 90 <= target_bg <= 120 and target_insulin > 0 and target_carbs < 20:
+            return jsonify({
+                'success': True,
+                'current_bg': target_bg,
+                'recent_insulin': target_insulin,
+                'recent_carbs': target_carbs,
+                'predictions': {
+                    'times': [],
+                    'values': [],
+                    'one_hour': 75,
+                    'two_hours': 68,
+                    'three_hours': 65
+                },
+                'alert': {
+                    'type': 'warning',
+                    'message': 'Predicted hypoglycemia (low blood sugar)!',
+                    'details': f'Nighttime risk: BG {target_bg} mg/dL with {target_insulin:.1f}U insulin and only {target_carbs}g carbs. Predicted to drop to ~65 mg/dL.'
+                }
+            })
+        
+        # Rule 2: High carbs with insufficient insulin
+        if target_carbs > 60 and target_insulin < 1:
+            estimated_spike = target_bg + (target_carbs * 3)  # Rough estimate: 3 mg/dL per gram of carb
+            one_hour = min(estimated_spike, 350)
+            two_hours = min(estimated_spike * 0.95, 340)
+            three_hours = min(estimated_spike * 0.9, 330)
+            return jsonify({
+                'success': True,
+                'current_bg': target_bg,
+                'recent_insulin': target_insulin,
+                'recent_carbs': target_carbs,
+                'predictions': {
+                    'times': [],
+                    'values': [],
+                    'one_hour': one_hour,
+                    'two_hours': two_hours,
+                    'three_hours': three_hours
+                },
+                'alert': {
+                    'type': 'warning',
+                    'message': 'Predicted hyperglycemia (high blood sugar)!',
+                    'details': f'High carb load ({target_carbs}g) with minimal insulin coverage. BG expected to spike to ~{int(one_hour)} mg/dL.'
+                }
+            })
+        
+        # Find best matching window in P03 dataset
+        best_match_idx = None
+        min_score = float('inf')
+        
+        # Search through valid windows (need LOOK_BACK history + some future data)
+        for i in range(LOOK_BACK, len(df_p03) - LOOK_BACK - 36):
+            window = df_p03.iloc[i - LOOK_BACK:i]
+            
+            # Calculate match score based on current BG, recent insulin, and recent carbs
+            current_bg = window.iloc[-1]['bg']
+            recent_insulin_sum = window['insulin'].sum()
+            recent_carbs_sum = window['carbs'].sum()
+            
+            # Weighted scoring (BG is most important)
+            bg_diff = abs(current_bg - target_bg)
+            insulin_diff = abs(recent_insulin_sum - target_insulin)
+            carbs_diff = abs(recent_carbs_sum - target_carbs)
+            
+            score = (bg_diff * 3) + insulin_diff + (carbs_diff * 0.5)
+            
+            if score < min_score:
+                min_score = score
+                best_match_idx = i
+        
+        if best_match_idx is None:
+            raise ValueError("Could not find matching window in dataset")
+        
+        # Log the selected index for debugging
+        print(f"\n=== SCENARIO 1 ===")
+        print(f"Target: BG={target_bg}, Insulin={target_insulin}, Carbs={target_carbs}")
+        print(f"Selected index: {best_match_idx} (using rows {best_match_idx - LOOK_BACK} to {best_match_idx})")
+        print(f"Match score: {min_score:.2f}")
+        print(f"Actual values at index: BG={df_p03.iloc[best_match_idx]['bg']:.1f}, "
+              f"Insulin sum={df_p03.iloc[best_match_idx - LOOK_BACK:best_match_idx]['insulin'].sum():.1f}, "
+              f"Carbs sum={df_p03.iloc[best_match_idx - LOOK_BACK:best_match_idx]['carbs'].sum():.1f}")
+        print(f"==================\n")
+        
+        # Use the matched window
+        start_idx = best_match_idx - LOOK_BACK
+        end_idx = best_match_idx
+        
         recent_history = df_p03.iloc[start_idx:end_idx]
 
         user_bg = recent_history['bg'].tolist()
@@ -294,6 +388,12 @@ def scenario2():
         
         if best_match_idx is None:
             raise ValueError("Could not find matching BG window in dataset")
+        
+        print(f"\n=== SCENARIO 2 ===")
+        print(f"Target BG: {current_bg}, Planned carbs: {planned_carbs}")
+        print(f"Selected index: {best_match_idx}, Matched BG: {df_p03.iloc[best_match_idx]['bg']:.1f}")
+        print(f"BG difference: {min_difference:.1f} mg/dL")
+        print(f"==================\n")
         
         # Use the matched window
         start_idx = best_match_idx - LOOK_BACK + 1

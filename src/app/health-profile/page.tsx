@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -29,13 +30,15 @@ export type HealthProfileData = {
   weight: string;
   heightFt: string;
   heightIn: string;
+  hba1c: string;
   dateOfBirth: Date;
   dateOfDiagnosis: Date;
   insulinSelections: { type: string; brand: string }[];
   glucoseDataFile: File | null;
   glucoseDataImageUrl: string;
   targetRange: [number, number];
-  totalDailyDose: string;
+  basalDose: string;
+  bolusDose: string;
 };
 
 export default function HealthProfilePage() {
@@ -52,13 +55,15 @@ export default function HealthProfilePage() {
     weight: '',
     heightFt: '',
     heightIn: '',
+    hba1c: '',
     dateOfBirth: new Date(),
     dateOfDiagnosis: new Date(),
     insulinSelections: [],
     glucoseDataFile: null,
     glucoseDataImageUrl: '',
     targetRange: [80, 140],
-    totalDailyDose: '',
+    basalDose: '',
+    bolusDose: '',
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -85,13 +90,15 @@ export default function HealthProfilePage() {
             weight: data.weight?.toString() || '',
             heightFt: feet.toString() || '',
             heightIn: inches.toString() || '',
+            hba1c: data.hba1c?.toString() || '',
             dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(),
             dateOfDiagnosis: data.dateOfDiagnosis ? new Date(data.dateOfDiagnosis) : new Date(),
             insulinSelections: data.insulinSelections || [],
             glucoseDataFile: null,
             glucoseDataImageUrl: data.glucoseDataImageUrl || '',
             targetRange: [data.targetGlucoseMin || 80, data.targetGlucoseMax || 140],
-            totalDailyDose: data.totalDailyDose?.toString() || '',
+            basalDose: data.basalDose?.toString() || '',
+            bolusDose: data.bolusDose?.toString() || '',
           });
           if(data.glucoseDataImageUrl) {
             setImagePreview(data.glucoseDataImageUrl);
@@ -167,13 +174,15 @@ export default function HealthProfilePage() {
           age: parseInt(formData.age),
           weight: parseInt(formData.weight),
           height: heightInCm,
+          hba1c: parseFloat(formData.hba1c),
           dateOfBirth: formData.dateOfBirth.toISOString().split('T')[0],
           dateOfDiagnosis: formData.dateOfDiagnosis.toISOString().split('T')[0],
           insulinSelections: formData.insulinSelections,
           glucoseDataImageUrl,
           targetGlucoseMin: formData.targetRange[0],
           targetGlucoseMax: formData.targetRange[1],
-          totalDailyDose: parseInt(formData.totalDailyDose),
+          basalDose: parseInt(formData.basalDose),
+          bolusDose: parseInt(formData.bolusDose),
         },
         { merge: true }
       );
@@ -233,7 +242,7 @@ export default function HealthProfilePage() {
                             <CardDescription>This information helps us personalize your experience.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-6">
-                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div className="space-y-2">
                                     <Label htmlFor="age">Age</Label>
                                     <Input id="age" name="age" type="number" placeholder="e.g., 35" value={formData.age} onChange={(e) => updateFormData({ age: e.target.value })} />
@@ -241,6 +250,10 @@ export default function HealthProfilePage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="weight">Weight (kg)</Label>
                                     <Input id="weight" name="weight" type="number" placeholder="e.g., 70" value={formData.weight} onChange={(e) => updateFormData({ weight: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="hba1c">HbA1c (%)</Label>
+                                    <Input id="hba1c" name="hba1c" type="number" placeholder="e.g., 6.5" step="0.1" value={formData.hba1c} onChange={(e) => updateFormData({ hba1c: e.target.value })} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -313,9 +326,15 @@ export default function HealthProfilePage() {
                             <CardDescription>Select the types and brands of insulin you use.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="totalDailyDose">Total Daily Dose (Units)</Label>
-                                <Input id="totalDailyDose" name="totalDailyDose" type="number" placeholder="e.g., 40" value={formData.totalDailyDose} onChange={(e) => updateFormData({ totalDailyDose: e.target.value })} />
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="basalDose">Basal Dose (Units/day)</Label>
+                                    <Input id="basalDose" name="basalDose" type="number" placeholder="e.g., 20" value={formData.basalDose} onChange={(e) => updateFormData({ basalDose: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="bolusDose">Bolus Dose (Units/day)</Label>
+                                    <Input id="bolusDose" name="bolusDose" type="number" placeholder="e.g., 20" value={formData.bolusDose} onChange={(e) => updateFormData({ bolusDose: e.target.value })} />
+                                </div>
                             </div>
                             <Accordion type="multiple" className="w-full" defaultValue={openAccordionItems}>
                                 {Object.entries(INSULIN_TYPES).map(([type, brands]) => (
