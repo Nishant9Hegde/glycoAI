@@ -28,8 +28,7 @@ type SolutionsFormValues = z.infer<typeof SolutionsSchema>;
 function getLanguageName(code: string): string {
     switch (code) {
       case 'en': return 'English';
-      case 'fr': return 'French';
-      case 'es': return 'Spanish';
+      case 'hi': return 'Hindi';
       default: return 'English';
     }
 }

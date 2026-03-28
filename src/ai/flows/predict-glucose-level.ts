@@ -23,7 +23,7 @@ const PredictGlucoseLevelInputSchema = z.object({
   targetLanguage: z
     .string()
     .describe(
-      'The target language for the response (e.g., "French", "Spanish").'
+      'The target language for the response (e.g., "Hindi", "English").',
     ),
 });
 export type PredictGlucoseLevelInput = z.infer<typeof PredictGlucoseLevelInputSchema>;

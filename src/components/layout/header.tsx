@@ -48,8 +48,7 @@ export function Header() {
           </SelectTrigger>
           <SelectContent align="end">
             <SelectItem value="en">English</SelectItem>
-            <SelectItem value="fr">French</SelectItem>
-            <SelectItem value="es">Spanish</SelectItem>
+            <SelectItem value="hi">Hindi</SelectItem>
           </SelectContent>
         </Select>
 
